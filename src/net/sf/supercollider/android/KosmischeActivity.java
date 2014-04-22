@@ -1,6 +1,7 @@
 package net.sf.supercollider.android;
 
 import net.sf.supercollider.android.ISuperCollider;
+import net.sf.supercollider.android.KKnob;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -11,12 +12,16 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
+import android.widget.BaseAdapter;
+import android.content.Context;
+import android.widget.GridView;
 
 /**
  * An example application which exercises some basic features of a SuperCollider-enabled application.
@@ -37,20 +42,42 @@ import android.util.Log;
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
     private ISuperCollider.Stub superCollider;
-    private TextView mainWidget = null;
+    private KKnob mainWidget = null;
     private int defaultNodeId = 999;
 
-    private TextView getMainWidget() {
-        return mainWidget;
+    private class KnobAdapter extends BaseAdapter {
+        private Context mContext;
+
+        public KnobAdapter(Context c) {
+            mContext = c;
+        }
+
+        public int getCount() {
+            return 4;
+        }
+
+        public Object getItem(int position) {
+            return null;
+        }
+
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        // create a new ImageView for each item referenced by the Adapter
+        public View getView(int position, View convertView, ViewGroup parent) {
+            KKnob knob;
+            if (convertView == null) {  // if it's not recycled, initialize some attributes
+                knob = new KKnob(mContext);
+                knob.setLayoutParams(new GridView.LayoutParams(400, 400));
+                knob.setPadding(10, 10, 10, 10);
+            } else {
+                knob = (KKnob) convertView;
+            }
+            return knob;
+        }
     }
 
-    private void log(String message) {
-        mainWidget.append(message);
-    }
-	
-    /*
-     * Gets us a SuperCollider service. 
-     */
     private class ScServiceConnection implements ServiceConnection {
         //@Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -59,12 +86,12 @@ public class KosmischeActivity extends Activity {
                 // Kick off the supercollider playback routine
                 superCollider.start();
                 // Start a synth playing
-                log("starting synth");
-                superCollider.sendMessage(OscMessage.createSynthMessage("Foo", defaultNodeId, 0, 1));
-                setUpControls(); // now we have an audio engine, let the activity hook up its controls
+                //                log("starting synth");
+                superCollider.sendMessage(OscMessage.createSynthMessage("Kosmische", defaultNodeId, 0, 1));
+                //                setUpControls(); // now we have an audio engine, let the activity hook up its controls
             } catch (RemoteException re) {
 
-                log(re.toString());
+                //log(re.toString());
                 re.printStackTrace();
             }
         }
@@ -77,57 +104,56 @@ public class KosmischeActivity extends Activity {
     /**
      * Provide the glue between the user's greasy fingers and the supercollider's shiny metal body
      */
-    public void setUpControls() {
-        if (mainWidget!=null) mainWidget.setOnTouchListener(new OnTouchListener() {
-                //@Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    if (event.getAction()==MotionEvent.ACTION_UP) {
-                        // OSC message right here!
-                        OscMessage noteMessage = new OscMessage( new Object[] {
-                                "/n_set", defaultNodeId, "amp", 0f
-                            });
-                        try {
-                            // Now send it over the interprocess link to SuperCollider running as a Service
-                            superCollider.sendMessage(noteMessage);
-                        } catch (RemoteException e) {
-                            Toast.makeText(
-                                           KosmischeActivity.this, 
-                                           "Failed to communicate with SuperCollider!", 
-                                           Toast.LENGTH_SHORT);
-                            e.printStackTrace();
-                        }
-                    } else if ((event.getAction()==MotionEvent.ACTION_DOWN) || (event.getAction()==MotionEvent.ACTION_MOVE)) {
-                        float vol = 1f - event.getY()/mainWidget.getHeight();
-                        OscMessage noteMessage = new OscMessage( new Object[] {
-                                "/n_set", defaultNodeId, "amp", vol
-                            });
-                        //float freq = 150+event.getX();
-                        //0 to mainWidget.getWidth() becomes sane-ish range of midinotes:
-                        float midinote = event.getX() * (70.f / mainWidget.getWidth()) + 28.f;
-                        float freq = sc_midicps(Math.round(midinote));
-                        OscMessage pitchMessage = new OscMessage( new Object[] {
-                                "/n_set", defaultNodeId, "freq", freq
-                            });
-                        try {
-                            superCollider.sendMessage(noteMessage);
-                            superCollider.sendMessage(pitchMessage);
-                        } catch (RemoteException e) {
-                            Toast.makeText(
-                                           KosmischeActivity.this, 
-                                           "Failed to communicate with SuperCollider!", 
-                                           Toast.LENGTH_SHORT);
-                            e.printStackTrace();
-                        }
-                    }
-                    return true;
-                }
-            });
-        try {
-            superCollider.openUDP(57110);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-    }
+    // public void setUpControls() {
+    //     if (mainWidget!=null) mainWidget.setOnTouchListener(new OnTouchListener() {
+    //             //@Override
+    //             public boolean onTouch(View v, MotionEvent event) {
+    //                 if (event.getAction()==MotionEvent.ACTION_UP) {
+    //                     // OSC message right here!
+    //                     OscMessage noteMessage = new OscMessage( new Object[] {
+    //                             "/n_set", defaultNodeId, "amp", 0f
+    //                         });
+    //                     try {
+    //                         // Now send it over the interprocess link to SuperCollider running as a Service
+    //                         superCollider.sendMessage(noteMessage);
+    //                     } catch (RemoteException e) {
+    //                         Toast.makeText(
+    //                                        KosmischeActivity.this, 
+    //                                        "Failed to communicate with SuperCollider!", 
+    //                                        Toast.LENGTH_SHORT);
+    //                         e.printStackTrace();
+    //                     }
+    //                 } else if ((event.getAction()==MotionEvent.ACTION_DOWN) || (event.getAction()==MotionEvent.ACTION_MOVE)) {
+    //                     float vol = 1f - event.getY()/mainWidget.getHeight();
+    //                     OscMessage noteMessage = new OscMessage( new Object[] {
+    //                             "/n_set", defaultNodeId, "amp", vol
+    //                         });
+    //                     //float freq = 150+event.getX();
+    //                     //0 to mainWidget.getWidth() becomes sane-ish range of midinotes:
+    //                     float midinote = event.getX() * (70.f / mainWidget.getWidth()) + 28.f;
+    //                     OscMessage pitchMessage = new OscMessage( new Object[] {
+    //                             "/n_set", defaultNodeId, "note", midinote
+    //                         });
+    //                     try {
+    //                         superCollider.sendMessage(noteMessage);
+    //                         superCollider.sendMessage(pitchMessage);
+    //                     } catch (RemoteException e) {
+    //                         Toast.makeText(
+    //                                        KosmischeActivity.this, 
+    //                                        "Failed to communicate with SuperCollider!", 
+    //                                        Toast.LENGTH_SHORT);
+    //                         e.printStackTrace();
+    //                     }
+    //                 }
+    //                 return true;
+    //             }
+    //         });
+    //     try {
+    //         superCollider.openUDP(57110);
+    //     } catch (RemoteException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
 	
     /** Called when the activity is first created. */
     @Override
@@ -136,12 +162,12 @@ public class KosmischeActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        mainWidget = new TextView(this);
+        GridView gridView = new GridView(this);
+        gridView.setAdapter(new KnobAdapter(this));
+
+        mainWidget = new KKnob(this);
         setContentView(mainWidget);
-        // Here's where we request the audio engine
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
-        mainWidget.setTypeface(Typeface.MONOSPACE);
-        mainWidget.setTextSize(10);
     }
 	
     @Override
