@@ -11,6 +11,8 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +39,14 @@ public class KosmischeActivity extends Activity {
     private ISuperCollider.Stub superCollider;
     private TextView mainWidget = null;
     private int defaultNodeId = 999;
+
+    private TextView getMainWidget() {
+        return mainWidget;
+    }
+
+    private void log(String message) {
+        mainWidget.append(message);
+    }
 	
     /*
      * Gets us a SuperCollider service. 
@@ -49,9 +59,12 @@ public class KosmischeActivity extends Activity {
                 // Kick off the supercollider playback routine
                 superCollider.start();
                 // Start a synth playing
-                superCollider.sendMessage(OscMessage.createSynthMessage("default", defaultNodeId, 0, 1)); 
+                log("starting synth");
+                superCollider.sendMessage(OscMessage.createSynthMessage("Foo", defaultNodeId, 0, 1));
                 setUpControls(); // now we have an audio engine, let the activity hook up its controls
             } catch (RemoteException re) {
+
+                log(re.toString());
                 re.printStackTrace();
             }
         }
@@ -69,7 +82,6 @@ public class KosmischeActivity extends Activity {
                 //@Override
                 public boolean onTouch(View v, MotionEvent event) {
                     if (event.getAction()==MotionEvent.ACTION_UP) {
-                        Log.d("net.sf.supercollider.android", "up");
                         // OSC message right here!
                         OscMessage noteMessage = new OscMessage( new Object[] {
                                 "/n_set", defaultNodeId, "amp", 0f
@@ -78,7 +90,6 @@ public class KosmischeActivity extends Activity {
                             // Now send it over the interprocess link to SuperCollider running as a Service
                             superCollider.sendMessage(noteMessage);
                         } catch (RemoteException e) {
-                            Log.d("net.sf.supercollider.android", "com", e);
                             Toast.makeText(
                                            KosmischeActivity.this, 
                                            "Failed to communicate with SuperCollider!", 
@@ -86,7 +97,6 @@ public class KosmischeActivity extends Activity {
                             e.printStackTrace();
                         }
                     } else if ((event.getAction()==MotionEvent.ACTION_DOWN) || (event.getAction()==MotionEvent.ACTION_MOVE)) {
-                        Log.d("net.sf.supercollider.android", "down/move");
                         float vol = 1f - event.getY()/mainWidget.getHeight();
                         OscMessage noteMessage = new OscMessage( new Object[] {
                                 "/n_set", defaultNodeId, "amp", vol
@@ -102,7 +112,6 @@ public class KosmischeActivity extends Activity {
                             superCollider.sendMessage(noteMessage);
                             superCollider.sendMessage(pitchMessage);
                         } catch (RemoteException e) {
-                            Log.d("net.sf.supercollider.android", "com", e);
                             Toast.makeText(
                                            KosmischeActivity.this, 
                                            "Failed to communicate with SuperCollider!", 
@@ -124,40 +133,15 @@ public class KosmischeActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         mainWidget = new TextView(this);
         setContentView(mainWidget);
         // Here's where we request the audio engine
-        bindService(new Intent("supercollider.START_SERVICE"),conn,BIND_AUTO_CREATE);
-		
+        bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
         mainWidget.setTypeface(Typeface.MONOSPACE);
         mainWidget.setTextSize(10);
-        mainWidget.setText("Welcome to a SuperCollider-Android instrument!\n"
-                           +"Y axis is volume, X axis is pitch\n"
-                           +"\n"
-                           + "                  ~+I777?                \n"
-                           + "           :++?I77I====~?I7I             \n"
-                           + "     ~=~+I77I??===+?IIII++~+?7           \n"
-                           + " 77I~?777+===+?????+++?+II??~==7 ,      \n"
-                           + " 7777 I~=II7?++=?+????++=+?IIII~~~+7:   \n"
-                           + " I7=I?777 ~~+?7I?+==++?II?++=~~+I7I+++  \n"
-                           + " ?7~, ~?=+777~~=+7IIII+~~=+??++++++,,+  \n"
-                           + " ?7~      =~+ 77~~~~~=++++++=:,,,,  :+  \n"
-                           + " +7= ??=~=      77++++==~~~:,   ,:, ,=  \n"
-                           + " +7= +?+???+?=,, 7++:     ,:~~~===, ,=  \n"
-                           + " =7= ++=+==???I, I=+   ,,:~=====~=, ,~  \n"
-                           + " ~7+ =+=     +I: ?=+,  ==~~     ~=: ,~  \n"
-                           + " ~7? ~+=  =~ +I: ?~+,  ~~       ~=: ,:  \n"
-                           + " :7? ~++  == =I~ +~+:  ~~   ~::  =~ ,:  \n"
-                           + " :7?  +++++= =I~ +~+:  :~   ~~:  =~ ,:  \n"
-                           + " ,7I=    =~~ ~I= =:+:  :=~~~~~:  =~  ,  \n"
-                           + "  7III~~      I+ ~:+~  :=~~~     ==  ,  \n"
-                           + "    I??7II=+=,I+ ~,+~       :~~====     \n"
-                           + "        ++=7II?I? :,+=  ,:::~=+==+=:     \n"
-                           + "        ,  =~:7I? , +=~=++++=~::,,,      \n"
-                           + "              :,  , ++===~~~,            \n"
-                           + "              ,     +~     ,             \n"
-                           + "                 ,                       \n"
-                           );
     }
 	
     @Override
@@ -202,6 +186,4 @@ public class KosmischeActivity extends Activity {
     {
         return (float) (440.0 * Math.pow((float)2., (note - 69.0) * (float)0.083333333333));
     }
-
 }
-

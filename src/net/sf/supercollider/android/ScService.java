@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.content.res.AssetManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -73,6 +74,7 @@ public class ScService extends Service {
 
 	@Override
     public void onCreate() {
+            Log.d("net.sf.supercollider.android", "creating audio engine");
 		audioThread = null;
 		File dataDir = new File(dataDirStr);
 		if(dataDir.mkdirs()) {  
@@ -96,6 +98,12 @@ public class ScService extends Service {
 			
 			Log.e(SCAudio.TAG,"Could not create directory " + dataDirStr);
 		}
+
+                try {
+                    deliverAssetSynthDefs();
+                } catch (Exception e) {
+                    Log.d("net.sf.supercollider.android", e.toString());
+                }
     }
 
     /* onStart is called for Android versions < 2.0, but onStartCommand is 
@@ -159,19 +167,33 @@ public class ScService extends Service {
 	 * Copies the default synth defs out, ScService calls it the first time the supercollider
 	 * data dir is created.
 	 */
-	public void deliverDefaultSynthDefs() {
-		try {
-			InputStream is = getAssets().open("default.scsyndef");
-			OutputStream os = new FileOutputStream("/sdcard/supercollider/synthdefs/default.scsyndef");
-			byte[] buf = new byte[1024];
-			int bytesRead = 0;
-			while (-1 != (bytesRead = is.read(buf))) {
-				os.write(buf,0,bytesRead);
-			}
-			is.close();
-			os.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    public void deliverSynthDef(String synthDefName) {
+        try {
+            InputStream is = getAssets().open(synthDefName);
+            OutputStream os = new FileOutputStream("/sdcard/supercollider/synthdefs/" + synthDefName);
+            byte[] buf = new byte[1024];
+            int bytesRead = 0;
+            while (-1 != (bytesRead = is.read(buf))) {
+                os.write(buf,0,bytesRead);
+            }
+            is.close();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deliverDefaultSynthDefs() {
+        deliverSynthDef("default.scsyndef");
+    }
+
+    public void deliverAssetSynthDefs() throws Exception {
+        AssetManager am = getAssets();
+        for(String synthDef : am.list("")) {
+            if(synthDef.contains("scsyndef")) {
+                Log.d("net.sf.supercollider.android", synthDef);
+                deliverSynthDef(synthDef);
+            }
+        }
+    }
 }

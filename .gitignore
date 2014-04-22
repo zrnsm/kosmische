@@ -1,0 +1,13 @@
+# ignore eclipse local config
+.settings/**
+.classpath
+# ignore paths to be generated during build
+bin/**
+gen/**/*
+libs/**/*
+obj/**/*
+tests/bin/**/*
+tests/gen/**/*
+# ignore mac cruft
+.DS_Store
+
