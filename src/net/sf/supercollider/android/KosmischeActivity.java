@@ -22,6 +22,7 @@ import android.util.Log;
 import android.widget.BaseAdapter;
 import android.content.Context;
 import android.widget.GridView;
+import android.widget.LinearLayout;
 
 /**
  * An example application which exercises some basic features of a SuperCollider-enabled application.
@@ -45,38 +46,38 @@ public class KosmischeActivity extends Activity {
     private KKnob mainWidget = null;
     private int defaultNodeId = 999;
 
-    private class KnobAdapter extends BaseAdapter {
-        private Context mContext;
+    // private class KnobAdapter extends BaseAdapter {
+    //     private Context mContext;
 
-        public KnobAdapter(Context c) {
-            mContext = c;
-        }
+    //     public KnobAdapter(Context c) {
+    //         mContext = c;
+    //     }
 
-        public int getCount() {
-            return 4;
-        }
+    //     public int getCount() {
+    //         return 4;
+    //     }
 
-        public Object getItem(int position) {
-            return null;
-        }
+    //     public Object getItem(int position) {
+    //         return null;
+    //     }
 
-        public long getItemId(int position) {
-            return 0;
-        }
+    //     public long getItemId(int position) {
+    //         return 0;
+    //     }
 
-        // create a new ImageView for each item referenced by the Adapter
-        public View getView(int position, View convertView, ViewGroup parent) {
-            KKnob knob;
-            if (convertView == null) {  // if it's not recycled, initialize some attributes
-                knob = new KKnob(mContext);
-                knob.setLayoutParams(new GridView.LayoutParams(400, 400));
-                knob.setPadding(10, 10, 10, 10);
-            } else {
-                knob = (KKnob) convertView;
-            }
-            return knob;
-        }
-    }
+    //     // create a new ImageView for each item referenced by the Adapter
+    //     public View getView(int position, View convertView, ViewGroup parent) {
+    //         KKnob knob;
+    //         if (convertView == null) {  // if it's not recycled, initialize some attributes
+    //             knob = new KKnob(mContext);
+    //             knob.setLayoutParams(new GridView.LayoutParams(400, 400));
+    //             knob.setPadding(10, 10, 10, 10);
+    //         } else {
+    //             knob = (KKnob) convertView;
+    //         }
+    //         return knob;
+    //     }
+    // }
 
     private class ScServiceConnection implements ServiceConnection {
         //@Override
@@ -162,11 +163,14 @@ public class KosmischeActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        GridView gridView = new GridView(this);
-        gridView.setAdapter(new KnobAdapter(this));
+        // GridView gridView = new GridView(this);
+        // gridView.setAdapter(new KnobAdapter(this));
 
-        mainWidget = new KKnob(this);
-        setContentView(mainWidget);
+        // LinearLayour ll = new LinearLayout(this);
+        // ll.add(new KKnob(ll));
+        // ll.add(new KSlider(ll));
+        //setContentView(new Slider(this));
+        setContentView(new Knob(this));
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
     }
 	
