@@ -13,13 +13,15 @@ import java.lang.Math;
 import android.util.Log;
 
 public class Slider extends KosmischeWidget {
-    public Slider(Context context) {
+    public Slider(Context context, int id) {
         super(context);
+        this.setId(id);
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
                     if ((event.getAction() == MotionEvent.ACTION_DOWN) || (event.getAction() == MotionEvent.ACTION_MOVE)) {
-                        position = (event.getX() - bounds.left) / ((double) bounds.width());
+                        position = event.getX() / width;
                         invalidate();
+                        ((KosmischeActivity) Slider.this.getContext()).sendControlMessage(Slider.this.getId(), getValue());
                     }
                     return true;
                 }
@@ -27,19 +29,15 @@ public class Slider extends KosmischeWidget {
     }
 
     protected void drawOutline(Canvas canvas) {
-        bounds = canvas.getClipBounds();
         Paint rectOutline = new Paint();
         rectOutline.setARGB(255, red, green, blue);
         rectOutline.setStyle(Paint.Style.STROKE);
-
-        bounds.bottom = bounds.bottom - 1;
-        bounds.right = bounds.right - 1;
-        canvas.drawRect(bounds, rectOutline);
+        canvas.drawRect(0, 0, width - 1, height - 1, rectOutline);
     }
 
     protected void drawFill(Canvas canvas) {
         Paint fill = new Paint();
         fill.setARGB(255, red, green, blue);
-        canvas.drawRect((float) bounds.left, (float) bounds.top, (float) (bounds.width() * position), (float) bounds.bottom, fill);
+        canvas.drawRect(0, 0, width * position, height, fill);
     }
 }
