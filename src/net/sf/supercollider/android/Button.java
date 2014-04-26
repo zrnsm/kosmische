@@ -13,12 +13,25 @@ import java.lang.Math;
 import android.util.Log;
 
 public class Button extends KosmischeWidget {
-    public Button(Context context) {
+    private boolean isSelected = false;
+    private Paint rectOutline;
+    private Paint fill;
+
+    public Button(Context context, int id) {
         super(context);
+        this.setId(id);
+        updateColor();
+
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    if ((event.getAction() == MotionEvent.ACTION_DOWN) || (event.getAction() == MotionEvent.ACTION_MOVE)) {
-                        position = (event.getX() - bounds.left) / ((double) bounds.width());
+                    Log.d("Kosmische", event.toString());
+                    Rect hitRect = new Rect();
+                    Button.this.getHitRect(hitRect);
+                    
+                    if ((event.getAction() == MotionEvent.ACTION_UP) || (event.getAction() == MotionEvent.ACTION_POINTER_UP) 
+                        && hitRect.contains((int) event.getX(), (int) event.getY())) {
+                        Log.d("Kosmische", event.toString());
+                        isSelected = !isSelected;
                         invalidate();
                     }
                     return true;
@@ -26,20 +39,41 @@ public class Button extends KosmischeWidget {
             });
     }
 
-    protected void drawOutline(Canvas canvas) {
-        bounds = canvas.getClipBounds();
-        Paint rectOutline = new Paint();
-        rectOutline.setARGB(255, red, green, blue);
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int effectiveWidth = widthSize > heightSize ? heightSize : widthSize;
+        setMeasuredDimension(effectiveWidth, effectiveWidth);
+    }
+
+
+    public void updateColor() {
+        rectOutline = new Paint();
+        rectOutline.setARGB(255, outline_red, outline_green, outline_blue);
         rectOutline.setStyle(Paint.Style.STROKE);
 
-        bounds.bottom = bounds.bottom - 1;
-        bounds.right = bounds.right - 1;
-        canvas.drawRect(bounds, rectOutline);
+        fill = new Paint();
+        fill.setARGB(255, fill_red, fill_green, fill_blue);
+    }
+
+    // protected void drawLabel(Canvas canvas) {
+    //     canvas.drawText(labelText, centerX, centerY, labelPaint);
+    // }
+
+    protected void drawOutline(Canvas canvas) {
+        canvas.drawRect(0, 0, width - 1, height - 1, rectOutline);
+    }
+
+    public boolean isSelected() {
+        return isSelected;
     }
 
     protected void drawFill(Canvas canvas) {
-        Paint fill = new Paint();
-        fill.setARGB(255, red, green, blue);
-        canvas.drawRect((float) bounds.left, (float) bounds.top, (float) (bounds.width() * position), (float) bounds.bottom, fill);
+        if(isSelected) {
+            canvas.drawRect(1, 1, width - 1, height - 1, fill);
+        }
     }
 }

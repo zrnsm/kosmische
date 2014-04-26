@@ -17,8 +17,9 @@ public class Knob extends KosmischeWidget {
     private final float COS_PI_4 = (float) Math.cos(Math.PI / 4);
     private final float SIN_PI_4 = (float) Math.sin(Math.PI / 4);
 
-    public Knob(Context context) {
+    public Knob(Context context, int id) {
         super(context);
+        this.setId(id);
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
                     if ((event.getAction() == MotionEvent.ACTION_DOWN) || (event.getAction() == MotionEvent.ACTION_MOVE)) {
@@ -36,8 +37,14 @@ public class Knob extends KosmischeWidget {
             });
     }
 
-    private float effectiveWidth() {
-        return width < height ? width : height;
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int effectiveWidth = widthSize > heightSize ? heightSize : widthSize;
+        setMeasuredDimension(effectiveWidth, effectiveWidth);
     }
 
     private float normalized_atan2(float y, float x) {
@@ -52,7 +59,7 @@ public class Knob extends KosmischeWidget {
 
     protected void drawOutline(Canvas canvas) {
         Paint arcColor = new Paint();
-        arcColor.setARGB(255, 255, 0, 0);
+        arcColor.setARGB(255, outline_red, outline_green, outline_blue);
         arcColor.setStyle(Paint.Style.STROKE);
         canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, 270, false, arcColor);
         canvas.drawArc(new RectF(centerX - (radius / 2), centerY - (radius / 2), centerX + (radius / 2), centerY + (radius / 2)), 135, 270, false, arcColor);
@@ -63,7 +70,7 @@ public class Knob extends KosmischeWidget {
 
     protected void drawFill(Canvas canvas) {
         Paint wedgeColor = new Paint();
-        wedgeColor.setARGB(255, red, green, blue);
+        wedgeColor.setARGB(255, fill_red, fill_green, fill_blue);
         canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, (int) (270 * position), true, wedgeColor);
 
         Paint background = new Paint();
@@ -73,7 +80,7 @@ public class Knob extends KosmischeWidget {
 
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        radius = effectiveWidth() / 2;
+        radius = width / 2;
         drawOutline(canvas);
         drawFill(canvas);
         drawLabel(canvas);

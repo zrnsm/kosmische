@@ -16,9 +16,12 @@ import java.math.BigDecimal;
 
 public abstract class KosmischeWidget extends View {
     protected float position = 0.5f;
-    protected int red = 255;;
-    protected int green = 0;
-    protected int blue = 0;
+    protected int fill_red = 255;;
+    protected int fill_green = 0;
+    protected int fill_blue = 0;
+    protected int outline_red = 57;;
+    protected int outline_green = 255;
+    protected int outline_blue = 20;
     protected float minimum = 0;
     protected float maximum = 127;
     protected String labelText = "Parameter";
@@ -27,6 +30,7 @@ public abstract class KosmischeWidget extends View {
     protected float height;
     protected float centerX;
     protected float centerY;
+    protected boolean valueLabelEnabled = false;
     public String name;
     protected boolean integerValued = false;
 
@@ -41,14 +45,28 @@ public abstract class KosmischeWidget extends View {
         labelPaint = new Paint();
         labelPaint.setARGB(255, 255, 255, 255);
         labelPaint.setTypeface(Typeface.MONOSPACE);
-        labelPaint.setTextSize(45);
+        labelPaint.setTextSize(25);
         setWillNotDraw(false);
     }
 
-    public void setRGB(int red, int green, int blue) {
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
+    public void setTextSize(int textSize) {
+        labelPaint.setTextSize(textSize);
+    }
+
+    public void setFillRGB(int red, int green, int blue) {
+        this.fill_red = red;
+        this.fill_green = green;
+        this.fill_blue = blue;
+    }
+
+    public void setOutlineRGB(int red, int green, int blue) {
+        this.outline_red = red;
+        this.outline_green = green;
+        this.outline_blue = blue;
+    }
+
+    public int[] getFillRGB() {
+        return new int[] {fill_red, fill_green, fill_blue};
     }
 
     public void setRange(float minimum, float maximum) {
@@ -60,12 +78,20 @@ public abstract class KosmischeWidget extends View {
         this.integerValued = integerValued;
     }
 
+    protected float getPosition() {
+        return position;
+    }
+
     public float getValue() {
-        float value = minimum + (position * (maximum - minimum));
+        float value = minimum + (getPosition() * (maximum - minimum));
         if(integerValued) {
             return (int) round(Math.round(value), 2);
         }
         return round(value, 2);
+    }
+
+    public void setValueLabelEnabled(boolean valueLabelEnabled) {
+        this.valueLabelEnabled = valueLabelEnabled;
     }
 
     public void setLabelText(String labelText) {
@@ -76,12 +102,11 @@ public abstract class KosmischeWidget extends View {
     protected abstract void drawOutline(Canvas canvas);
 
     protected void drawLabel(Canvas canvas) {
-        Log.d("Kosmische", "drawing label");
-        canvas.drawText(labelText + " " + getValue(), centerX, centerY, labelPaint);
+        String label = valueLabelEnabled ? labelText + " " + getValue() : labelText;
+        canvas.drawText(label, centerX, centerY, labelPaint);
     }
 
     public void onConfigurationChanged(Configuration newConfig) {
-        Log.d("Kosmische", "changing orientation");
         super.onConfigurationChanged(newConfig);
         invalidate();
     }
@@ -90,8 +115,8 @@ public abstract class KosmischeWidget extends View {
         Log.d("Kosmische", this.name + " " + getLeft() + " " + getTop() + " " + (getLeft() + w) + " " + (getTop() + h));
         this.width = w;
         this.height = h;
-        this.centerX = width / 2;
-        this.centerY = height / 2;
+        this.centerX = w / 2;
+        this.centerY = h / 2;
         super.onSizeChanged(w, h, oldw, oldh);
         invalidate();
     }

@@ -13,31 +13,55 @@ import java.lang.Math;
 import android.util.Log;
 
 public class Slider extends KosmischeWidget {
-    public Slider(Context context, int id) {
+    public static final int HORIZONTAL = 0;
+    public static final int VERTICAL = 1;
+    private int orientation = HORIZONTAL;
+    private float h_position = 0.5f;
+    private float v_position = 0.5f;
+
+
+    public Slider(Context context, int id, int orientation) {
         super(context);
         this.setId(id);
+        this.orientation = orientation;
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
                     if ((event.getAction() == MotionEvent.ACTION_DOWN) || (event.getAction() == MotionEvent.ACTION_MOVE)) {
-                        position = event.getX() / width;
+                        h_position = event.getX() / width;
+                        v_position = (height - event.getY()) / height;
                         invalidate();
-                        ((KosmischeActivity) Slider.this.getContext()).sendControlMessage(Slider.this.getId(), getValue());
+                        //                        ((KosmischeActivity) Slider.this.getContext()).sendControlMessage(Slider.this.getId(), getValue());
                     }
                     return true;
                 }
             });
     }
 
+    protected float getPosition() {
+        if(orientation == HORIZONTAL) {
+            return h_position;
+        }
+        else {
+            return v_position;
+        }
+    }
+
     protected void drawOutline(Canvas canvas) {
         Paint rectOutline = new Paint();
-        rectOutline.setARGB(255, red, green, blue);
+        rectOutline.setARGB(255, outline_red, outline_green, outline_blue);
         rectOutline.setStyle(Paint.Style.STROKE);
         canvas.drawRect(0, 0, width - 1, height - 1, rectOutline);
     }
 
     protected void drawFill(Canvas canvas) {
         Paint fill = new Paint();
-        fill.setARGB(255, red, green, blue);
-        canvas.drawRect(0, 0, width * position, height, fill);
+        fill.setARGB(255, fill_red, fill_green, fill_blue);
+        Log.d("Kosmische", "orientation " + orientation);
+        if(orientation == HORIZONTAL) {
+            canvas.drawRect(0, 0, width * h_position, height - 1, fill);
+        }
+        else {
+            canvas.drawRect(0, height - height * v_position, width - 1, height - 1, fill);
+        }
     }
 }
