@@ -13,9 +13,10 @@ import java.lang.Math;
 import android.util.Log;
 
 public class Button extends KosmischeWidget {
-    private boolean isSelected = false;
+    protected boolean isSelected = false;
     private Paint rectOutline;
     private Paint fill;
+    protected boolean isActive = false;
 
     public Button(Context context, int id) {
         super(context);
@@ -71,8 +72,12 @@ public class Button extends KosmischeWidget {
         return isSelected;
     }
 
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
     protected void drawFill(Canvas canvas) {
-        if(isSelected) {
+        if(isSelected || isActive) {
             canvas.drawRect(1, 1, width - 1, height - 1, fill);
         }
     }

@@ -61,8 +61,8 @@ public class KosmischeActivity extends Activity {
     private final int sequenceLength = 16;
 
     private int active_red = 255;
-    private int active_green = 255;
-    private int active_blue = 255;
+    private int active_green = 0;
+    private int active_blue = 0;
 
     private int[] previousFillRGB;
 
@@ -158,7 +158,7 @@ public class KosmischeActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //        sequence = new Sequence(16);
+        sequence = new Sequence(16);
         stepButtons = new ArrayList<Button>(sequenceLength);
 
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -427,27 +427,14 @@ public class KosmischeActivity extends Activity {
         aux.setOrientation(LinearLayout.HORIZONTAL);
         aux.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Button play_button = new Button(this, 90);
-        play_button.name = "play/stop";
-        play_button.setLabelText("Play");
-        play_button.setFillRGB(0,200,0);
-        play_button.updateColor();
-        play_button.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        PlayButton playButton = new PlayButton(this, 90);
+        playButton.name = "play/stop";
+        playButton.setLabelText("Play");
+        playButton.setFillRGB(0,200,0);
+        playButton.updateColor();
+        playButton.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        play_button.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View v) {
-                    Button b = (Button) v;
-                    if(!b.isSelected()) {
-                        timerHandler.removeCallbacks(timerRunnable);
-                    } else {
-                        timerHandler.postDelayed(timerRunnable, 0);
-                    }
-                }
-            });
-
-        aux.addView(play_button);
+        aux.addView(playButton);
 
         lLayout.addView(aux);
 
@@ -456,6 +443,14 @@ public class KosmischeActivity extends Activity {
         // REMEMBER TO TURN THIS ON FOR SOUND
         //        bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
     }
+    
+    public Handler getTimerHandler() {
+        return timerHandler;
+    }
+    
+    public Runnable getTimerRunnable() {
+        return timerRunnable;
+    }
 
     private Handler timerHandler = new Handler();
     private Runnable timerRunnable = new Runnable() {
@@ -463,19 +458,33 @@ public class KosmischeActivity extends Activity {
         public void run() {
             currentStep++;
             Log.d("Kosmische", "currentStep " + currentStep);
+            Log.d("Kosmische", "sequence length " + sequence.getLength());
             if(currentStep >= sequence.getLength()) {
+                Log.d("Kosmische", "resetting");
                 currentStep = 0;
             }
 
             int previousStep = (currentStep - 1) % sequence.getLength();
+            if(currentStep == 0) {
+                previousStep = sequence.getLength() - 1;
+            }
+
+            Log.d("Kosmische", "previousStep " + previousStep);
             // restore preious step color
             if(previousFillRGB != null) {
+                Log.d("Kosmische", "altering previousStep");
                 stepButtons.get(previousStep).setFillRGB(previousFillRGB[0], previousFillRGB[1], previousFillRGB[2]);
+                stepButtons.get(previousStep).updateColor();
+                stepButtons.get(previousStep).setActive(false);
+                stepButtons.get(previousStep).invalidate();
             }
 
             // set the current step active
             previousFillRGB = stepButtons.get(currentStep).getFillRGB();
+            stepButtons.get(previousStep).updateColor();
             stepButtons.get(currentStep).setFillRGB(active_red, active_green, active_blue);
+            stepButtons.get(previousStep).setActive(true);
+            stepButtons.get(currentStep).invalidate();
 
             // get the note out of the sequence
             //            sequence.get(currentStep)
