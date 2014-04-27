@@ -29,7 +29,7 @@ public class Slider extends KosmischeWidget {
                         h_position = event.getX() / width;
                         v_position = (height - event.getY()) / height;
                         invalidate();
-                        //                        ((KosmischeActivity) Slider.this.getContext()).sendControlMessage(Slider.this.getId(), getValue());
+                        ((KosmischeActivity) Slider.this.getContext()).sendControlMessage(Slider.this.getId(), getValue());
                     }
                     return true;
                 }

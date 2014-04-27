@@ -31,6 +31,8 @@ import android.util.Log;
 import android.view.Gravity;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.lang.Thread;
+import java.lang.InterruptedException;
 
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
@@ -47,6 +49,8 @@ public class KosmischeActivity extends Activity {
 
     private Paint activeFill;
     private Paint previousFill;
+
+    private int nextWidgetId = 0;
 
     // Kosmische parameters
     //     osc1_level = 0.5, 
@@ -78,14 +82,17 @@ public class KosmischeActivity extends Activity {
     //     reverb_room_size = 0.5,
     //     reverb_damp = 0.5
 
-    private void registerWidget(int id, String parameter) {
+    private int registerWidget(String parameter) {
+        int id = nextWidgetId;
+        nextWidgetId++;
         parameterMap.put(id, parameter);
+        return id;
     }
-    
-    public void sendControlMessage(int id, float value) {
-        Log.d("Kosmische", id + ", " + parameterMap.get(id) + ", " + value);
+
+    public void sendControlMessage(String parameterName, float value) {
+        Log.d("Kosmische", parameterName + ": " + value);
         OscMessage controlMessage = new OscMessage( new Object[] {
-                "/n_set", defaultNodeId, parameterMap.get(id), value
+                "/n_set", defaultNodeId, parameterName, value
             });
         try {
             superCollider.sendMessage(controlMessage);
@@ -97,6 +104,11 @@ public class KosmischeActivity extends Activity {
             
             e.printStackTrace();
         }
+    }
+    
+    public void sendControlMessage(int id, float value) {
+        Log.d("Kosmische", id + ", " + parameterMap.get(id) + ", " + value);
+        sendControlMessage(parameterMap.get(id), value);
     }
 
     private class ScServiceConnection implements ServiceConnection {
@@ -123,9 +135,9 @@ public class KosmischeActivity extends Activity {
     }
 
     private void createStepButtons(LinearLayout steps) {
-        for(int i = 1; i <= sequenceLength; i++) {
+        for(int i = 0; i < sequenceLength; i++) {
             StepButton button = new StepButton(this, i);
-            button.setLabelText("C#");
+            button.setLabelText(sequence.get(i).getMidiNumber().toString());
             button.setFillRGB(200, 200, 200);
             button.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
             stepButtons.add(button);
@@ -169,41 +181,38 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.setOrientation(LinearLayout.HORIZONTAL);
         osc1_section_top.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Slider osc1_type = new Slider(this, 73, Slider.HORIZONTAL);
+        Slider osc1_type = new Slider(this, registerWidget("osc1_type"), Slider.HORIZONTAL);
         osc1_type.setLabelText("osc1_type");
         osc1_type.setRange(0, 3);
         osc1_type.setIntegerValued(true);
         osc1_type.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc1_type.setFillRGB(190,190,190);
-        //        registerWidget(osc1_type.getId(), "osc1_type");
         osc1_section_top.addView(osc1_type);
 
-        Slider osc1_tune = new Slider(this, 44, Slider.HORIZONTAL);
+        Slider osc1_tune = new Slider(this, registerWidget("osc1_tune"), Slider.HORIZONTAL);
         osc1_tune.setLabelText("osc1_tune");
         osc1_tune.setRange(-12, 12);
         osc1_tune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc1_tune.setFillRGB(190,190,190);
-        //        registerWidget(osc1_tune.getId(), "osc1_type");
         osc1_section_top.addView(osc1_tune);
 
         LinearLayout osc1_section_bottom = new LinearLayout(this);
         osc1_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
         osc1_section_bottom.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Slider osc1_width = new Slider(this, 45, Slider.HORIZONTAL);
+        Slider osc1_width = new Slider(this, registerWidget("osc1_width"), Slider.HORIZONTAL);
         osc1_width.setLabelText("osc1_width");
-        osc1_width.setRange(0, 3);
+        osc1_width.setRange(0, 1);
         osc1_width.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc1_width.setFillRGB(190,190,190);
         //        registerWidget(osc1_width.getId(), "osc1_width");
         osc1_section_bottom.addView(osc1_width);
 
-        Slider osc1_detune = new Slider(this, 46, Slider.HORIZONTAL);
+        Slider osc1_detune = new Slider(this, registerWidget("osc1_detune"), Slider.HORIZONTAL);
         osc1_detune.setLabelText("osc1_detune");
-        osc1_detune.setRange(-12, 12);
+        osc1_detune.setRange(-500, 500);
         osc1_detune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc1_detune.setFillRGB(190,190,190);
-        //        registerWidget(osc1_detune.getId(), "osc1_type");
         osc1_section_bottom.addView(osc1_detune);
 
         osc1_section.addView(osc1_section_top);
@@ -215,20 +224,18 @@ public class KosmischeActivity extends Activity {
         filter_section.setOrientation(LinearLayout.HORIZONTAL);
         filter_section.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Knob cutoff_knob = new Knob(this, 41);
+        Knob cutoff_knob = new Knob(this, registerWidget("cutoff"));
         cutoff_knob.setLabelText("cutoff");
-        cutoff_knob.setRange(0, 1);
+        cutoff_knob.setRange(0, 10000);
         cutoff_knob.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         cutoff_knob.setFillRGB(210,210,210);
-        //        registerWidget(cutoff_knob.getId(), "osc1_type");
         filter_section.addView(cutoff_knob);
 
-        Knob resonance_knob = new Knob(this, 42);
+        Knob resonance_knob = new Knob(this, registerWidget("resonance"));
         resonance_knob.setLabelText("reso");
-        resonance_knob.setRange(0, 1);
+        resonance_knob.setRange(0, 4);
         resonance_knob.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         resonance_knob.setFillRGB(210,210,210);
-        //        registerWidget(resonance_knob.getId(), "osc1_type");
         filter_section.addView(resonance_knob);
 
         row1.addView(filter_section);
@@ -237,44 +244,35 @@ public class KosmischeActivity extends Activity {
         amp_adsr.setOrientation(LinearLayout.HORIZONTAL);
         amp_adsr.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Slider slider = new Slider(this, 1, Slider.VERTICAL);
+        Slider slider = new Slider(this, registerWidget("amp_attack"), Slider.VERTICAL);
         slider.setLabelText("a");
         slider.setRange(0, 1);
         slider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider.setFillRGB(210,210,210);
-        //        registerWidget(slider.getId(), "osc1_type");
         amp_adsr.addView(slider);
 
-        Slider slider2 = new Slider(this, 2, Slider.VERTICAL);
+        Slider slider2 = new Slider(this, registerWidget("amp_decay"), Slider.VERTICAL);
         slider2.setLabelText("d");
         slider2.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider2.setFillRGB(210,210,210);
         slider2.setRange(0, 1);
-        //        registerWidget(slider2.getId(), "osc1_detune");
         amp_adsr.addView(slider2);
 
-        Slider slider3 = new Slider(this, 3, Slider.VERTICAL);
+        Slider slider3 = new Slider(this, registerWidget("amp_sustain"), Slider.VERTICAL);
         slider3.setLabelText("s");
         slider3.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider3.setFillRGB(210,210,210);
         slider3.setRange(0, 1);
-        //        registerWidget(slider3.getId(), "osc2_type");
         amp_adsr.addView(slider3);
 
-        Slider slider4 = new Slider(this, 4, Slider.VERTICAL);
+        Slider slider4 = new Slider(this, registerWidget("amp_release"), Slider.VERTICAL);
         slider4.setLabelText("r");
         slider4.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider4.setFillRGB(210,210,210);
         slider4.setRange(0, 1);
-        //        registerWidget(slider4.getId(), "osc2_detune");
         amp_adsr.addView(slider4);
 
         row1.addView(amp_adsr);
-
-        // FillerWidget w3 = new FillerWidget(this);
-        // w3.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        // //knob.setLayoutParams(new LinearLayout.LayoutParams(500, 500, 0));
-        // row1.addView(w3);
 
         lLayout.addView(row1);
 
@@ -291,41 +289,37 @@ public class KosmischeActivity extends Activity {
         osc2_section_top.setOrientation(LinearLayout.HORIZONTAL);
         osc2_section_top.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Slider osc2_type = new Slider(this, 81, Slider.HORIZONTAL);
+        Slider osc2_type = new Slider(this, registerWidget("osc2_type"), Slider.HORIZONTAL);
         osc2_type.setLabelText("osc2_type");
         osc2_type.setRange(0, 3);
         osc2_type.setIntegerValued(true);
         osc2_type.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc2_type.setFillRGB(150,150,150);
-        //        registerWidget(osc2_type.getId(), "osc2_type");
         osc2_section_top.addView(osc2_type);
 
-        Slider osc2_tune = new Slider(this, 82, Slider.HORIZONTAL);
+        Slider osc2_tune = new Slider(this, registerWidget("osc2_tune"), Slider.HORIZONTAL);
         osc2_tune.setLabelText("osc2_tune");
         osc2_tune.setRange(-12, 12);
         osc2_tune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc2_tune.setFillRGB(150,150,150);
-        //        registerWidget(osc2_tune.getId(), "osc2_type");
         osc2_section_top.addView(osc2_tune);
 
         LinearLayout osc2_section_bottom = new LinearLayout(this);
         osc2_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
         osc2_section_bottom.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Slider osc2_width = new Slider(this, 83, Slider.HORIZONTAL);
+        Slider osc2_width = new Slider(this, registerWidget("osc2_width"), Slider.HORIZONTAL);
         osc2_width.setLabelText("osc2_width");
-        osc2_width.setRange(0, 3);
+        osc2_width.setRange(0, 1);
         osc2_width.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc2_width.setFillRGB(150,150,150);
-        //        registerWidget(osc2_width.getId(), "osc2_width");
         osc2_section_bottom.addView(osc2_width);
 
-        Slider osc2_detune = new Slider(this, 84, Slider.HORIZONTAL);
+        Slider osc2_detune = new Slider(this, registerWidget("osc2_detune"), Slider.HORIZONTAL);
         osc2_detune.setLabelText("osc2_detune");
-        osc2_detune.setRange(-12, 12);
+        osc2_detune.setRange(-500, 500);
         osc2_detune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         osc2_detune.setFillRGB(150,150,150);
-        //        registerWidget(osc2_detune.getId(), "osc2_type");
         osc2_section_bottom.addView(osc2_detune);
 
         osc2_section.addView(osc2_section_top);
@@ -341,36 +335,32 @@ public class KosmischeActivity extends Activity {
         filter_adsr.setOrientation(LinearLayout.HORIZONTAL);
         filter_adsr.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
-        Slider slider5 = new Slider(this, 5, Slider.VERTICAL);
+        Slider slider5 = new Slider(this, registerWidget("filter_attack"), Slider.VERTICAL);
         slider5.setLabelText("a");
         slider5.setRange(0, 1);
         slider5.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider5.setFillRGB(240,240,240);
-        //        registerWidget(slider.getId(), "osc1_type");
         filter_adsr.addView(slider5);
 
-        Slider slider6 = new Slider(this, 6, Slider.VERTICAL);
+        Slider slider6 = new Slider(this, registerWidget("filter_decay"), Slider.VERTICAL);
         slider6.setLabelText("d");
         slider6.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider6.setFillRGB(240,240,240);
         slider6.setRange(0, 1);
-        //        registerWidget(slider2.getId(), "osc1_detune");
         filter_adsr.addView(slider6);
 
-        Slider slider7 = new Slider(this, 7, Slider.VERTICAL);
+        Slider slider7 = new Slider(this, registerWidget("filter_sustain"), Slider.VERTICAL);
         slider7.setLabelText("s");
         slider7.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider7.setFillRGB(240,240,240);
         slider7.setRange(0, 1);
-        //        registerWidget(slider3.getId(), "osc2_type");
         filter_adsr.addView(slider7);
 
-        Slider slider8 = new Slider(this, 8, Slider.VERTICAL);
+        Slider slider8 = new Slider(this, registerWidget("filter_release"), Slider.VERTICAL);
         slider8.setLabelText("r");
         slider8.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider8.setFillRGB(240,240,240);
         slider8.setRange(0, 1);
-        //        registerWidget(slider4.getId(), "osc2_detune");
         filter_adsr.addView(slider8);
 
         row2.addView(filter_adsr);
@@ -394,17 +384,14 @@ public class KosmischeActivity extends Activity {
 
         PlayButton playButton = new PlayButton(this, 90);
         playButton.setLabelText("Play");
-        playButton.setFillRGB(0,200,0);
+        playButton.setFillRGB(0, 200, 0);
         playButton.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         aux.addView(playButton);
-
         lLayout.addView(aux);
-
         setContentView(lLayout);
 
-        // REMEMBER TO TURN THIS ON FOR SOUND
-        //        bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
+        bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
     }
     
     public Handler getTimerHandler() {
@@ -448,7 +435,15 @@ public class KosmischeActivity extends Activity {
             stepButtons.get(currentStep).invalidate();
 
             // get the note out of the sequence
-            //            sequence.get(currentStep)
+            sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
+            sendControlMessage("trigger", 1);
+            try {
+                Thread.sleep((int) (60000 / bpm / 4.0 / 2.0));
+            }
+            catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+            sendControlMessage("trigger", 0);
 
             timerHandler.postDelayed(this, (int) (60000 / bpm / 4.0));
         }

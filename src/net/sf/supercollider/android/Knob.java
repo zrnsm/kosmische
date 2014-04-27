@@ -29,6 +29,7 @@ public class Knob extends KosmischeWidget {
                             if(next_position >= 0)
                                 position = next_position / THREE_PI_OVER_TWO;
                             invalidate();
+                            ((KosmischeActivity) Knob.this.getContext()).sendControlMessage(Knob.this.getId(), getValue());
                         }
                     }
                     return true;

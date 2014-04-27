@@ -6,7 +6,7 @@ public class Note {
         this.midiNumber = midiNumber;
     }
 
-    public int getMidiNumber() {
+    public Integer getMidiNumber() {
         return midiNumber;
     }
 }
