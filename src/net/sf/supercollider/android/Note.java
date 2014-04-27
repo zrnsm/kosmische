@@ -9,4 +9,18 @@ public class Note {
     public Integer getMidiNumber() {
         return midiNumber;
     }
+
+    public void increment() {
+        midiNumber++;
+        if(midiNumber > 127) {
+            midiNumber = 127;
+        }
+    }
+
+    public void decrement() {
+        midiNumber--;
+        if(midiNumber < 0) {
+            midiNumber = 0;
+        }
+    }
 }

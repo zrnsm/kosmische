@@ -53,6 +53,10 @@ public class Button extends KosmischeWidget {
         return isSelected;
     }
 
+    public void setSelected(boolean selected) {
+        isSelected = selected;
+    }
+
     protected void drawFill(Canvas canvas) {
         if(isSelected) {
             canvas.drawRect(1, 1, width - 1, height - 1, fill);

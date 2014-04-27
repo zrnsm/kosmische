@@ -14,10 +14,10 @@ import android.util.Log;
 public class Slider extends KosmischeWidget {
     public static final int HORIZONTAL = 0;
     public static final int VERTICAL = 1;
-    private int orientation = HORIZONTAL;
+    protected int orientation = HORIZONTAL;
 
-    private float h_position = 0.5f;
-    private float v_position = 0.5f;
+    protected float h_position = 0.5f;
+    protected float v_position = 0.5f;
 
     public Slider(Context context, int id, int orientation) {
         super(context);
