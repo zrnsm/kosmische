@@ -421,30 +421,33 @@ public class KosmischeActivity extends Activity {
 
             Log.d("Kosmische", "previousStep " + previousStep);
             // restore preious step color
+            StepButton previousStepButton = stepButtons.get(previousStep);
             if(previousFill != null) {
                 Log.d("Kosmische", "altering previousStep");
-                stepButtons.get(previousStep).setFill(previousFill);
-                stepButtons.get(previousStep).setIsCurrentStep(false);
-                stepButtons.get(previousStep).invalidate();
+                previousStepButton.setFill(previousFill);
+                previousStepButton.setIsCurrentStep(false);
+                previousStepButton.invalidate();
             }
 
             // set the current step active
-            previousFill = stepButtons.get(currentStep).getFill();
-            stepButtons.get(currentStep).setFill(activeFill);
-            stepButtons.get(currentStep).setIsCurrentStep(true);
-            stepButtons.get(currentStep).invalidate();
+            StepButton currentStepButton = stepButtons.get(currentStep);
+            previousFill = currentStepButton.getFill();
+            currentStepButton.setFill(activeFill);
+            currentStepButton.setIsCurrentStep(true);
+            currentStepButton.invalidate();
 
             // get the note out of the sequence
-            sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
-            sendControlMessage("trigger", 1);
-            try {
-                Thread.sleep((int) (60000 / bpm / 4.0 / 2.0));
+            if(currentStepButton.isSelected()) {
+                sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
+                sendControlMessage("trigger", 1);
+                try {
+                    Thread.sleep((int) (60000 / bpm / 4.0 / 2.0));
+                }
+                catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
+                sendControlMessage("trigger", 0);
             }
-            catch(InterruptedException e) {
-                e.printStackTrace();
-            }
-            sendControlMessage("trigger", 0);
-
             timerHandler.postDelayed(this, (int) (60000 / bpm / 4.0));
         }
     };
