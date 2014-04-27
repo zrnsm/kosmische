@@ -6,8 +6,12 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.graphics.Typeface;
+import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.MotionEvent;
@@ -18,35 +22,16 @@ import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
 import android.widget.BaseAdapter;
-import android.content.Context;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.util.Log;
 import android.view.Gravity;
 import java.util.HashMap;
 import java.util.ArrayList;
-import android.os.Handler;
-import android.content.pm.ActivityInfo;
 
-/**
- * An example application which exercises some basic features of a SuperCollider-enabled application.
- * 
- * It creates an ScServiceConnection object through which it gets a SuperCollider.Stub.  The stub
- * object provides access to the SuperCollider Service through IPC- it does not run in the same process 
- * space as this Application.  The stub is then wired simply through the OnTouchEventListener of the
- * main GUI widget, to play a note when you touch it.
- * 
- * The only SC-A class that this activity needs to be directly aware of is the generated ISuperCollider class
- * 
- * @TODO: be more javadoc-friendly
- * 
- * @author Dan Stowell
- * @author Alex Shaw
- *
- */
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
     private ISuperCollider.Stub superCollider;
@@ -57,14 +42,11 @@ public class KosmischeActivity extends Activity {
     private int currentStep = -1;
 
     private Sequence sequence;
-    private ArrayList<Button> stepButtons;
+    private ArrayList<StepButton> stepButtons;
     private final int sequenceLength = 16;
 
-    private int active_red = 255;
-    private int active_green = 0;
-    private int active_blue = 0;
-
-    private int[] previousFillRGB;
+    private Paint activeFill;
+    private Paint previousFill;
 
     // Kosmische parameters
     //     osc1_level = 0.5, 
@@ -142,11 +124,9 @@ public class KosmischeActivity extends Activity {
 
     private void createStepButtons(LinearLayout steps) {
         for(int i = 1; i <= sequenceLength; i++) {
-            Button button = new Button(this, i);
-            button.name = "button" + i;
+            StepButton button = new StepButton(this, i);
             button.setLabelText("C#");
-            button.setFillRGB(200,200,200);
-            button.updateColor();
+            button.setFillRGB(200, 200, 200);
             button.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
             stepButtons.add(button);
             steps.addView(button);
@@ -158,8 +138,11 @@ public class KosmischeActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         sequence = new Sequence(16);
-        stepButtons = new ArrayList<Button>(sequenceLength);
+        stepButtons = new ArrayList<StepButton>(sequenceLength);
+        activeFill = new Paint();
+        activeFill.setARGB(255, 255, 0, 0);
 
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -187,7 +170,6 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Slider osc1_type = new Slider(this, 73, Slider.HORIZONTAL);
-        osc1_type.name = "osc1_type";
         osc1_type.setLabelText("osc1_type");
         osc1_type.setRange(0, 3);
         osc1_type.setIntegerValued(true);
@@ -197,7 +179,6 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.addView(osc1_type);
 
         Slider osc1_tune = new Slider(this, 44, Slider.HORIZONTAL);
-        osc1_tune.name = "osc1_tune";
         osc1_tune.setLabelText("osc1_tune");
         osc1_tune.setRange(-12, 12);
         osc1_tune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -210,7 +191,6 @@ public class KosmischeActivity extends Activity {
         osc1_section_bottom.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Slider osc1_width = new Slider(this, 45, Slider.HORIZONTAL);
-        osc1_width.name = "osc1_width";
         osc1_width.setLabelText("osc1_width");
         osc1_width.setRange(0, 3);
         osc1_width.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -219,7 +199,6 @@ public class KosmischeActivity extends Activity {
         osc1_section_bottom.addView(osc1_width);
 
         Slider osc1_detune = new Slider(this, 46, Slider.HORIZONTAL);
-        osc1_detune.name = "osc1_detune";
         osc1_detune.setLabelText("osc1_detune");
         osc1_detune.setRange(-12, 12);
         osc1_detune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -237,7 +216,6 @@ public class KosmischeActivity extends Activity {
         filter_section.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Knob cutoff_knob = new Knob(this, 41);
-        cutoff_knob.name = "cutoff";
         cutoff_knob.setLabelText("cutoff");
         cutoff_knob.setRange(0, 1);
         cutoff_knob.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -246,7 +224,6 @@ public class KosmischeActivity extends Activity {
         filter_section.addView(cutoff_knob);
 
         Knob resonance_knob = new Knob(this, 42);
-        resonance_knob.name = "reso";
         resonance_knob.setLabelText("reso");
         resonance_knob.setRange(0, 1);
         resonance_knob.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -261,7 +238,6 @@ public class KosmischeActivity extends Activity {
         amp_adsr.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Slider slider = new Slider(this, 1, Slider.VERTICAL);
-        slider.name = "slider1";
         slider.setLabelText("a");
         slider.setRange(0, 1);
         slider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -270,7 +246,6 @@ public class KosmischeActivity extends Activity {
         amp_adsr.addView(slider);
 
         Slider slider2 = new Slider(this, 2, Slider.VERTICAL);
-        slider2.name = "slider2";
         slider2.setLabelText("d");
         slider2.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider2.setFillRGB(210,210,210);
@@ -279,7 +254,6 @@ public class KosmischeActivity extends Activity {
         amp_adsr.addView(slider2);
 
         Slider slider3 = new Slider(this, 3, Slider.VERTICAL);
-        slider3.name = "slider3";
         slider3.setLabelText("s");
         slider3.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider3.setFillRGB(210,210,210);
@@ -288,7 +262,6 @@ public class KosmischeActivity extends Activity {
         amp_adsr.addView(slider3);
 
         Slider slider4 = new Slider(this, 4, Slider.VERTICAL);
-        slider4.name = "slider4";
         slider4.setLabelText("r");
         slider4.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider4.setFillRGB(210,210,210);
@@ -319,7 +292,6 @@ public class KosmischeActivity extends Activity {
         osc2_section_top.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Slider osc2_type = new Slider(this, 81, Slider.HORIZONTAL);
-        osc2_type.name = "osc2_type";
         osc2_type.setLabelText("osc2_type");
         osc2_type.setRange(0, 3);
         osc2_type.setIntegerValued(true);
@@ -329,7 +301,6 @@ public class KosmischeActivity extends Activity {
         osc2_section_top.addView(osc2_type);
 
         Slider osc2_tune = new Slider(this, 82, Slider.HORIZONTAL);
-        osc2_tune.name = "osc2_tune";
         osc2_tune.setLabelText("osc2_tune");
         osc2_tune.setRange(-12, 12);
         osc2_tune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -342,7 +313,6 @@ public class KosmischeActivity extends Activity {
         osc2_section_bottom.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Slider osc2_width = new Slider(this, 83, Slider.HORIZONTAL);
-        osc2_width.name = "osc2_width";
         osc2_width.setLabelText("osc2_width");
         osc2_width.setRange(0, 3);
         osc2_width.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -351,7 +321,6 @@ public class KosmischeActivity extends Activity {
         osc2_section_bottom.addView(osc2_width);
 
         Slider osc2_detune = new Slider(this, 84, Slider.HORIZONTAL);
-        osc2_detune.name = "osc2_detune";
         osc2_detune.setLabelText("osc2_detune");
         osc2_detune.setRange(-12, 12);
         osc2_detune.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -373,7 +342,6 @@ public class KosmischeActivity extends Activity {
         filter_adsr.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         Slider slider5 = new Slider(this, 5, Slider.VERTICAL);
-        slider5.name = "slider1";
         slider5.setLabelText("a");
         slider5.setRange(0, 1);
         slider5.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
@@ -382,7 +350,6 @@ public class KosmischeActivity extends Activity {
         filter_adsr.addView(slider5);
 
         Slider slider6 = new Slider(this, 6, Slider.VERTICAL);
-        slider6.name = "slider2";
         slider6.setLabelText("d");
         slider6.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider6.setFillRGB(240,240,240);
@@ -391,7 +358,6 @@ public class KosmischeActivity extends Activity {
         filter_adsr.addView(slider6);
 
         Slider slider7 = new Slider(this, 7, Slider.VERTICAL);
-        slider7.name = "slider3";
         slider7.setLabelText("s");
         slider7.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider7.setFillRGB(240,240,240);
@@ -400,7 +366,6 @@ public class KosmischeActivity extends Activity {
         filter_adsr.addView(slider7);
 
         Slider slider8 = new Slider(this, 8, Slider.VERTICAL);
-        slider8.name = "slider8";
         slider8.setLabelText("r");
         slider8.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
         slider8.setFillRGB(240,240,240);
@@ -428,10 +393,8 @@ public class KosmischeActivity extends Activity {
         aux.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         PlayButton playButton = new PlayButton(this, 90);
-        playButton.name = "play/stop";
         playButton.setLabelText("Play");
         playButton.setFillRGB(0,200,0);
-        playButton.updateColor();
         playButton.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
 
         aux.addView(playButton);
@@ -471,25 +434,23 @@ public class KosmischeActivity extends Activity {
 
             Log.d("Kosmische", "previousStep " + previousStep);
             // restore preious step color
-            if(previousFillRGB != null) {
+            if(previousFill != null) {
                 Log.d("Kosmische", "altering previousStep");
-                stepButtons.get(previousStep).setFillRGB(previousFillRGB[0], previousFillRGB[1], previousFillRGB[2]);
-                stepButtons.get(previousStep).updateColor();
-                stepButtons.get(previousStep).setActive(false);
+                stepButtons.get(previousStep).setFill(previousFill);
+                stepButtons.get(previousStep).setIsCurrentStep(false);
                 stepButtons.get(previousStep).invalidate();
             }
 
             // set the current step active
-            previousFillRGB = stepButtons.get(currentStep).getFillRGB();
-            stepButtons.get(previousStep).updateColor();
-            stepButtons.get(currentStep).setFillRGB(active_red, active_green, active_blue);
-            stepButtons.get(previousStep).setActive(true);
+            previousFill = stepButtons.get(currentStep).getFill();
+            stepButtons.get(currentStep).setFill(activeFill);
+            stepButtons.get(currentStep).setIsCurrentStep(true);
             stepButtons.get(currentStep).invalidate();
 
             // get the note out of the sequence
             //            sequence.get(currentStep)
 
-            timerHandler.postDelayed(this, (int) (60000 / bpm));
+            timerHandler.postDelayed(this, (int) (60000 / bpm / 4.0));
         }
     };
 	

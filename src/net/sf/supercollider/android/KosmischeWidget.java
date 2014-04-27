@@ -13,26 +13,28 @@ import java.lang.Math;
 import android.content.res.Configuration;
 import java.math.BigDecimal;
 
-
 public abstract class KosmischeWidget extends View {
     protected float position = 0.5f;
-    protected int fill_red = 255;;
-    protected int fill_green = 0;
-    protected int fill_blue = 0;
-    protected int outline_red = 57;;
-    protected int outline_green = 255;
-    protected int outline_blue = 20;
-    protected float minimum = 0;
-    protected float maximum = 127;
-    protected String labelText = "Parameter";
-    protected Paint labelPaint;
+    protected float minimumValue = 0;
+    protected float maximumValue = 127;
     protected float width;
     protected float height;
     protected float centerX;
     protected float centerY;
+
+    protected String labelText = "Parameter";
+
+    protected Paint labelPaint;
+    protected Paint outline;
+    protected Paint fill;
+    protected Paint background;
+
+    //   add default colors
+    //    protected Paint defaultFill;
+
     protected boolean valueLabelEnabled = false;
-    public String name;
     protected boolean integerValued = false;
+    // protected int padding = 10;
 
     public static float round(float d, int decimalPlace) {
         BigDecimal bd = new BigDecimal(Float.toString(d));
@@ -42,36 +44,54 @@ public abstract class KosmischeWidget extends View {
 
     public KosmischeWidget(Context context) {
         super(context);
+
         labelPaint = new Paint();
         labelPaint.setARGB(255, 255, 255, 255);
         labelPaint.setTypeface(Typeface.MONOSPACE);
         labelPaint.setTextSize(25);
         setWillNotDraw(false);
+
+        background = new Paint();
+        background.setARGB(255, 0, 0, 0);
+
+        fill = new Paint();
+        fill.setARGB(255, 200, 200, 200);
+
+        outline = new Paint();
+        outline.setARGB(255, 255, 0, 0);
+        outline.setStyle(Paint.Style.STROKE);
     }
 
     public void setTextSize(int textSize) {
         labelPaint.setTextSize(textSize);
     }
 
+    public void setFill(Paint fill) {
+        this.fill = fill;
+    }
+
+    public Paint getFill() {
+        return fill;
+    }
+
     public void setFillRGB(int red, int green, int blue) {
-        this.fill_red = red;
-        this.fill_green = green;
-        this.fill_blue = blue;
+        if(fill == null) {
+            fill = new Paint();
+        }
+        fill.setARGB(255, red, green, blue);
     }
 
     public void setOutlineRGB(int red, int green, int blue) {
-        this.outline_red = red;
-        this.outline_green = green;
-        this.outline_blue = blue;
+        if(outline == null) {
+            outline = new Paint();
+        }
+        outline.setARGB(255, red, green, blue);
+        outline.setStyle(Paint.Style.STROKE);
     }
 
-    public int[] getFillRGB() {
-        return new int[] {fill_red, fill_green, fill_blue};
-    }
-
-    public void setRange(float minimum, float maximum) {
-        this.minimum = minimum;
-        this.maximum = maximum;
+    public void setRange(float minimumValue, float maximumValue) {
+        this.minimumValue = minimumValue;
+        this.maximumValue = maximumValue;
     }
 
     public void setIntegerValued(boolean integerValued) {
@@ -83,7 +103,7 @@ public abstract class KosmischeWidget extends View {
     }
 
     public float getValue() {
-        float value = minimum + (getPosition() * (maximum - minimum));
+        float value = minimumValue + (getPosition() * (maximumValue - minimumValue));
         if(integerValued) {
             return (int) round(Math.round(value), 2);
         }
@@ -112,7 +132,7 @@ public abstract class KosmischeWidget extends View {
     }
 
     protected void onSizeChanged (int w, int h, int oldw, int oldh) {
-        Log.d("Kosmische", this.name + " " + getLeft() + " " + getTop() + " " + (getLeft() + w) + " " + (getTop() + h));
+        Log.d("Kosmische", this.labelText + " " + getLeft() + " " + getTop() + " " + (getLeft() + w) + " " + (getTop() + h));
         this.width = w;
         this.height = h;
         this.centerX = w / 2;
@@ -122,8 +142,8 @@ public abstract class KosmischeWidget extends View {
     }
 
     protected void onDraw(Canvas canvas) {
-        Log.d("LayoutTest", this.name + " drawing");
-        Log.d("LayoutTest", this.name + " clipbounds " + canvas.getClipBounds());
+        Log.d("LayoutTest", this.labelText + " drawing");
+        Log.d("LayoutTest", this.labelText + " clipbounds " + canvas.getClipBounds());
         drawOutline(canvas);
         drawFill(canvas);
         drawLabel(canvas);

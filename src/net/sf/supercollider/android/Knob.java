@@ -3,7 +3,6 @@ package net.sf.supercollider.android;
 import android.view.View;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.view.View.OnTouchListener;
@@ -58,23 +57,16 @@ public class Knob extends KosmischeWidget {
     }
 
     protected void drawOutline(Canvas canvas) {
-        Paint arcColor = new Paint();
-        arcColor.setARGB(255, outline_red, outline_green, outline_blue);
-        arcColor.setStyle(Paint.Style.STROKE);
-        canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, 270, false, arcColor);
-        canvas.drawArc(new RectF(centerX - (radius / 2), centerY - (radius / 2), centerX + (radius / 2), centerY + (radius / 2)), 135, 270, false, arcColor);
+        canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, 270, false, outline);
+        canvas.drawArc(new RectF(centerX - (radius / 2), centerY - (radius / 2), centerX + (radius / 2), centerY + (radius / 2)), 135, 270, false, outline);
         float r_offset = (float) (radius / Math.sqrt(2));
-        canvas.drawLine(centerX, centerY, centerX + r_offset, centerY + r_offset, arcColor);
-        canvas.drawLine(centerX, centerY, centerX - r_offset, centerY + r_offset, arcColor);
+        canvas.drawLine(centerX, centerY, centerX + r_offset, centerY + r_offset, outline);
+        canvas.drawLine(centerX, centerY, centerX - r_offset, centerY + r_offset, outline);
     }
 
     protected void drawFill(Canvas canvas) {
-        Paint wedgeColor = new Paint();
-        wedgeColor.setARGB(255, fill_red, fill_green, fill_blue);
-        canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, (int) (270 * position), true, wedgeColor);
+        canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, (int) (270 * position), true, fill);
 
-        Paint background = new Paint();
-        background.setARGB(255, 0, 0, 0);
         canvas.drawCircle(centerX, centerY, (radius / 2) - 1, background);
     }
 

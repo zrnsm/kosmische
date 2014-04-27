@@ -3,7 +3,6 @@ package net.sf.supercollider.android;
 import android.view.View;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.graphics.Rect;
@@ -16,9 +15,9 @@ public class Slider extends KosmischeWidget {
     public static final int HORIZONTAL = 0;
     public static final int VERTICAL = 1;
     private int orientation = HORIZONTAL;
+
     private float h_position = 0.5f;
     private float v_position = 0.5f;
-
 
     public Slider(Context context, int id, int orientation) {
         super(context);
@@ -47,15 +46,10 @@ public class Slider extends KosmischeWidget {
     }
 
     protected void drawOutline(Canvas canvas) {
-        Paint rectOutline = new Paint();
-        rectOutline.setARGB(255, outline_red, outline_green, outline_blue);
-        rectOutline.setStyle(Paint.Style.STROKE);
-        canvas.drawRect(0, 0, width - 1, height - 1, rectOutline);
+        canvas.drawRect(0, 0, width - 1, height - 1, outline);
     }
 
     protected void drawFill(Canvas canvas) {
-        Paint fill = new Paint();
-        fill.setARGB(255, fill_red, fill_green, fill_blue);
         Log.d("Kosmische", "orientation " + orientation);
         if(orientation == HORIZONTAL) {
             canvas.drawRect(0, 0, width * h_position, height - 1, fill);
