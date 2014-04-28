@@ -181,10 +181,9 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.setOrientation(LinearLayout.HORIZONTAL);
         osc1_section_top.setLayoutParams(layoutParams);
 
-        Slider osc1_type = new Slider(this, registerWidget("osc1_type"), Slider.HORIZONTAL);
-        osc1_type.setLabelText("osc1_type");
-        osc1_type.setRange(0, 3);
-        osc1_type.setIntegerValued(true);
+        ChoiceButtonGroup osc1_type = new ChoiceButtonGroup(this, 
+                                                            registerWidget("osc1_type"),
+                                                            new String[] {"Saw", "Pulse", "Sin", "Noise"});
         osc1_type.setLayoutParams(layoutParams);
         osc1_type.setFillRGB(190,190,190);
         osc1_section_top.addView(osc1_type);
@@ -290,12 +289,11 @@ public class KosmischeActivity extends Activity {
         osc2_section_top.setOrientation(LinearLayout.HORIZONTAL);
         osc2_section_top.setLayoutParams(layoutParams);
 
-        Slider osc2_type = new Slider(this, registerWidget("osc2_type"), Slider.HORIZONTAL);
-        osc2_type.setLabelText("osc2_type");
-        osc2_type.setRange(0, 3);
-        osc2_type.setIntegerValued(true);
+        ChoiceButtonGroup osc2_type = new ChoiceButtonGroup(this, 
+                                                            registerWidget("osc2_type"),
+                                                            new String[] {"Saw", "Pulse", "Sin", "Noise"});
         osc2_type.setLayoutParams(layoutParams);
-        osc2_type.setFillRGB(150,150,150);
+        osc2_type.setFillRGB(190,190,190);
         osc2_section_top.addView(osc2_type);
 
         Slider osc2_tune = new Slider(this, registerWidget("osc2_tune"), Slider.HORIZONTAL);
