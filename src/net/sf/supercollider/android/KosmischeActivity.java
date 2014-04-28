@@ -411,6 +411,13 @@ public class KosmischeActivity extends Activity {
         effects.setOrientation(LinearLayout.HORIZONTAL);
         effects.setLayoutParams(layoutParams);
 
+        Knob delayMixKnob = new Knob(this, registerWidget("delay_mix"));
+        delayMixKnob.setLabelText("delay mix");
+        delayMixKnob.setRange(-1, 1);
+        delayMixKnob.setLayoutParams(layoutParams);
+        delayMixKnob.setFillRGB(210,210,210);
+        effects.addView(delayMixKnob);
+
         Knob delaytimeKnob = new Knob(this, registerWidget("delaytime"));
         delaytimeKnob.setLabelText("delay time");
         delaytimeKnob.setRange(0, 2);
