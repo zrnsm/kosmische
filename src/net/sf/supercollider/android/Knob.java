@@ -44,7 +44,7 @@ public class Knob extends KosmischeWidget {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
         int effectiveWidth = widthSize > heightSize ? heightSize : widthSize;
-        setMeasuredDimension(effectiveWidth, effectiveWidth);
+        setMeasuredDimension(effectiveWidth - 2, effectiveWidth - 2);
     }
 
     private float normalized_atan2(float y, float x) {

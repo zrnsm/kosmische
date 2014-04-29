@@ -22,7 +22,8 @@ public class FillerWidget extends View {
         myId = FillerWidget.id;
         FillerWidget.id++;
         fill = new Paint();
-        fill.setARGB(255, randomColor(), randomColor(), randomColor());
+        //        fill.setARGB(255, randomColor(), randomColor(), randomColor());
+        fill.setARGB(255, 0, 0, 0);
         setWillNotDraw(false);
     }
 

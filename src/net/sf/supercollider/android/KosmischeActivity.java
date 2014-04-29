@@ -248,6 +248,10 @@ public class KosmischeActivity extends Activity {
         filter_section.setOrientation(LinearLayout.HORIZONTAL);
         filter_section.setLayoutParams(layoutParams);
 
+        FillerWidget w1 = new FillerWidget(this);
+        w1.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 30f));
+        filter_section.addView(w1);
+
         Knob cutoff_knob = new Knob(this, registerWidget("cutoff"));
         cutoff_knob.setLabelText("cutoff");
         cutoff_knob.setRange(0, 10000);
@@ -255,12 +259,20 @@ public class KosmischeActivity extends Activity {
         cutoff_knob.setFillRGB(210,210,210);
         filter_section.addView(cutoff_knob);
 
+        FillerWidget w2 = new FillerWidget(this);
+        w2.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 30f));
+        filter_section.addView(w2);
+
         Knob resonance_knob = new Knob(this, registerWidget("resonance"));
         resonance_knob.setLabelText("reso");
         resonance_knob.setRange(0, 4);
         resonance_knob.setLayoutParams(layoutParams);
         resonance_knob.setFillRGB(210,210,210);
         filter_section.addView(resonance_knob);
+
+        FillerWidget w3 = new FillerWidget(this);
+        w3.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 30f));
+        filter_section.addView(w3);
 
         row1.addView(filter_section);
 
