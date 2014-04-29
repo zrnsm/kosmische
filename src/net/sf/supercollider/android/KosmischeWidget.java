@@ -46,7 +46,7 @@ public abstract class KosmischeWidget extends View {
         super(context);
 
         labelPaint = new Paint();
-        labelPaint.setARGB(255, 255, 255, 255);
+        labelPaint.setARGB(255, 100, 100, 100);
         labelPaint.setTypeface(Typeface.MONOSPACE);
         labelPaint.setTextSize(25);
         setWillNotDraw(false);
@@ -55,10 +55,11 @@ public abstract class KosmischeWidget extends View {
         background.setARGB(255, 0, 0, 0);
 
         fill = new Paint();
-        fill.setARGB(255, 200, 200, 200);
+        int s = (int) (255 * Math.random());
+        fill.setARGB(255, 255, 255, 255);
 
         outline = new Paint();
-        outline.setARGB(255, 255, 0, 0);
+        outline.setARGB(255, 200, 200, 200);
         outline.setStyle(Paint.Style.STROKE);
     }
 
@@ -75,10 +76,10 @@ public abstract class KosmischeWidget extends View {
     }
 
     public void setFillRGB(int red, int green, int blue) {
-        if(fill == null) {
-            fill = new Paint();
-        }
-        fill.setARGB(255, red, green, blue);
+        // if(fill == null) {
+        //     fill = new Paint();
+        // }
+        // fill.setARGB(255, red, green, blue);
     }
 
     public void setOutlineRGB(int red, int green, int blue) {
@@ -141,9 +142,14 @@ public abstract class KosmischeWidget extends View {
         invalidate();
     }
 
+    protected void drawBackground(Canvas canvas) {
+        canvas.drawRect(0, 0, width, height, background);
+    }
+
     protected void onDraw(Canvas canvas) {
         Log.d("LayoutTest", this.labelText + " drawing");
         Log.d("LayoutTest", this.labelText + " clipbounds " + canvas.getClipBounds());
+        drawBackground(canvas);
         drawOutline(canvas);
         drawFill(canvas);
         drawLabel(canvas);

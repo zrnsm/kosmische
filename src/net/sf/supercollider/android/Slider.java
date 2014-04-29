@@ -26,8 +26,10 @@ public class Slider extends KosmischeWidget {
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
                     if ((event.getAction() == MotionEvent.ACTION_DOWN) || (event.getAction() == MotionEvent.ACTION_MOVE)) {
-                        h_position = event.getX() / width;
-                        v_position = (height - event.getY()) / height;
+                        Log.d("Kosmische", ((Float) v_position).toString());
+                        Log.d("Kosmische", ((Float) h_position).toString());
+                        h_position = Math.max(0, Math.min(1, event.getX() / width));
+                        v_position = Math.max(0, Math.min(1, (height - event.getY()) / height));
                         invalidate();
                         ((KosmischeActivity) Slider.this.getContext()).sendControlMessage(Slider.this.getId(), getValue());
                     }

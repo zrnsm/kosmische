@@ -27,6 +27,7 @@ import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Gravity;
 import java.util.HashMap;
@@ -42,6 +43,8 @@ public class KosmischeActivity extends Activity {
     private HashMap<Integer, String> parameterMap;
     private float bpm = 120.0f;
     private int currentStep = -1;
+    private TimerRunnable timerRunnable = new TimerRunnable();
+    private Thread timerThread = new Thread(timerRunnable);
 
     private Sequence sequence;
     private ArrayList<StepButton> stepButtons;
@@ -90,7 +93,6 @@ public class KosmischeActivity extends Activity {
     }
 
     public void sendControlMessage(String parameterName, float value) {
-        Log.d("Kosmische", parameterName + ": " + value);
         OscMessage controlMessage = new OscMessage( new Object[] {
                 "/n_set", defaultNodeId, parameterName, value
             });
@@ -107,7 +109,6 @@ public class KosmischeActivity extends Activity {
     }
     
     public void sendControlMessage(int id, float value) {
-        Log.d("Kosmische", id + ", " + parameterMap.get(id) + ", " + value);
         sendControlMessage(parameterMap.get(id), value);
     }
 
@@ -153,8 +154,13 @@ public class KosmischeActivity extends Activity {
 
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
+
+
+        // handlerThread = new HandlerThread("Timer");
+        // handlerThread.start();
+        // handler = new Handler(handlerThread.getLooper());
 
         sequence = new Sequence(16);
         stepButtons = new ArrayList<StepButton>(sequenceLength);
@@ -169,16 +175,24 @@ public class KosmischeActivity extends Activity {
         lLayout.setLayoutParams(layoutParams);
 
         LinearLayout row1 = new LinearLayout(this);
+        row1.setBackgroundColor(android.R.color.white);
         row1.setOrientation(LinearLayout.HORIZONTAL);
         row1.setLayoutParams(layoutParams);
+
+        LinearLayout osc1_container = new LinearLayout(this);
+        osc1_container.setOrientation(LinearLayout.HORIZONTAL);
+        osc1_container.setBackgroundColor(android.R.color.white);
+        osc1_container.setLayoutParams(layoutParams);
 
         // osc 1 section
         LinearLayout osc1_section = new LinearLayout(this);
         osc1_section.setOrientation(LinearLayout.VERTICAL);
+        osc1_section.setBackgroundColor(android.R.color.white);
         osc1_section.setLayoutParams(layoutParams);
 
         LinearLayout osc1_section_top = new LinearLayout(this);
         osc1_section_top.setOrientation(LinearLayout.HORIZONTAL);
+        osc1_section_top.setBackgroundColor(android.R.color.white);
         osc1_section_top.setLayoutParams(layoutParams);
 
         ChoiceButtonGroup osc1_type = new ChoiceButtonGroup(this, 
@@ -198,6 +212,7 @@ public class KosmischeActivity extends Activity {
 
         LinearLayout osc1_section_bottom = new LinearLayout(this);
         osc1_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
+        osc1_section_bottom.setBackgroundColor(android.R.color.white);
         osc1_section_bottom.setLayoutParams(layoutParams);
 
         Slider osc1_width = new Slider(this, registerWidget("osc1_width"), Slider.HORIZONTAL);
@@ -217,7 +232,16 @@ public class KosmischeActivity extends Activity {
 
         osc1_section.addView(osc1_section_top);
         osc1_section.addView(osc1_section_bottom);
-        row1.addView(osc1_section);
+
+        Slider osc1_level = new Slider(this, registerWidget("osc1_level"), Slider.VERTICAL);
+        osc1_level.setLabelText("osc1_level");
+        osc1_level.setRange(1, 10);
+        osc1_level.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 4f));
+        osc1_level.setFillRGB(190,190,190);
+
+        osc1_container.addView(osc1_section);
+        osc1_container.addView(osc1_level);
+        row1.addView(osc1_container);
 
         // filter section
         LinearLayout filter_section = new LinearLayout(this);
@@ -280,6 +304,10 @@ public class KosmischeActivity extends Activity {
         row2.setOrientation(LinearLayout.HORIZONTAL);
         row2.setLayoutParams(layoutParams);
 
+        LinearLayout osc2_container = new LinearLayout(this);
+        osc2_container.setOrientation(LinearLayout.HORIZONTAL);
+        osc2_container.setLayoutParams(layoutParams);
+
         // osc 2 section
         LinearLayout osc2_section = new LinearLayout(this);
         osc2_section.setOrientation(LinearLayout.VERTICAL);
@@ -322,13 +350,136 @@ public class KosmischeActivity extends Activity {
         osc2_detune.setFillRGB(150,150,150);
         osc2_section_bottom.addView(osc2_detune);
 
+        Slider osc2_level = new Slider(this, registerWidget("osc2_level"), Slider.VERTICAL);
+        osc2_level.setLabelText("osc2_level");
+        osc2_level.setRange(1, 10);
+        osc2_level.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 4f));
+        osc2_level.setFillRGB(190,190,190);
+
         osc2_section.addView(osc2_section_top);
         osc2_section.addView(osc2_section_bottom);
-        row2.addView(osc2_section);
 
-        FillerWidget w5 = new FillerWidget(this);
-        w5.setLayoutParams(layoutParams);
-        row2.addView(w5);
+        osc2_container.addView(osc2_section);
+        osc2_container.addView(osc2_level);
+        row2.addView(osc2_container);
+
+        // lfo section
+
+        LinearLayout lfo_section = new LinearLayout(this);
+        lfo_section.setOrientation(LinearLayout.VERTICAL);
+        lfo_section.setLayoutParams(layoutParams);
+
+        LinearLayout lfo1 = new LinearLayout(this);
+        lfo1.setOrientation(LinearLayout.HORIZONTAL);
+        lfo1.setLayoutParams(layoutParams);
+
+        ChoiceButtonGroup lfo1_type = new ChoiceButtonGroup(this, 
+                                                            registerWidget("lfo1_type"),
+                                                            new String[] {"S", "T", "P", "N"});
+        lfo1_type.setLayoutParams(layoutParams);
+        lfo1_type.setFillRGB(190,190,190);
+        lfo1.addView(lfo1_type);
+
+        final Slider lfo1_freq = new Slider(this, registerWidget("lfo1_freq"), Slider.HORIZONTAL);
+        lfo1_freq.setLabelText("freq");
+        lfo1_freq.setRange(0, 5);
+        lfo1_freq.setLayoutParams(layoutParams);
+        lfo1_freq.setFillRGB(150,150,150);
+        lfo1.addView(lfo1_freq);
+
+        final Slider lfo1_depth = new Slider(this, registerWidget("lfo1_depth"), Slider.HORIZONTAL);
+        lfo1_depth.setLabelText("depth");
+        lfo1_depth.setRange(0, 200);
+        lfo1_depth.setLayoutParams(layoutParams);
+        lfo1_depth.setFillRGB(150,150,150);
+        lfo1.addView(lfo1_depth);
+
+        final ScrollBox lfo1_target = new ScrollBox(this, 
+                                                            registerWidget("lfo1_target"),
+                                                            new String[] {"O1F", 
+                                                                          "O1W", 
+                                                                          "O2F", 
+                                                                          "O2W", 
+                                                                          "DT",
+                                                                          "DecT",
+                                                                          "Cut",
+                                                                          "Reso"
+                                                            });
+
+        final float[][] lfoDepthRanges = {
+            {0,10},
+            {0,1},
+            {0,10},
+            {0,1},
+            {0,2},
+            {0,10},
+            {0,10000},
+            {0,3},
+        };
+
+        lfo1_target.setOnChangeRunnable(new Runnable() {
+                public void run() {
+                    float[] range = lfoDepthRanges[lfo1_target.getSelectedValue()];
+                    lfo1_depth.setRange(range[0], range[1]);
+                }
+            });
+
+        lfo1_target.setLayoutParams(layoutParams);
+        lfo1_target.setFillRGB(150,150,150);
+        lfo1.addView(lfo1_target);
+        lfo_section.addView(lfo1);
+
+        LinearLayout lfo2 = new LinearLayout(this);
+        lfo2.setOrientation(LinearLayout.HORIZONTAL);
+        lfo2.setLayoutParams(layoutParams);
+
+        ChoiceButtonGroup lfo2_type = new ChoiceButtonGroup(this, 
+                                                            registerWidget("lfo2_type"),
+                                                            new String[] {"S", "T", "P", "N"});
+        lfo2_type.setLayoutParams(layoutParams);
+        lfo2_type.setFillRGB(190,190,190);
+        lfo2.addView(lfo2_type);
+
+        Slider lfo2_freq = new Slider(this, registerWidget("lfo2_freq"), Slider.HORIZONTAL);
+        lfo2_freq.setLabelText("freq");
+        lfo2_freq.setRange(0, 5);
+        lfo2_freq.setLayoutParams(layoutParams);
+        lfo2_freq.setFillRGB(150,150,150);
+        lfo2.addView(lfo2_freq);
+
+        final Slider lfo2_depth = new Slider(this, registerWidget("lfo2_depth"), Slider.HORIZONTAL);
+        lfo2_depth.setLabelText("depth");
+        lfo2_depth.setRange(0, 200);
+        lfo2_depth.setLayoutParams(layoutParams);
+        lfo2_depth.setFillRGB(150,150,150);
+        lfo2.addView(lfo2_depth);
+
+        final ScrollBox lfo2_target = new ScrollBox(this, 
+                                                            registerWidget("lfo2_target"),
+                                                            new String[] {"O1F", 
+                                                                          "O1W", 
+                                                                          "O2F", 
+                                                                          "O2W", 
+                                                                          "DT",
+                                                                          "DecT",
+                                                                          "Cut",
+                                                                          "Reso"
+                                              });
+
+        lfo2_target.setOnChangeRunnable(new Runnable() {
+                public void run() {
+                    float[] range = lfoDepthRanges[lfo2_target.getSelectedValue()];
+                    lfo2_depth.setRange(range[0], range[1]);
+                }
+            });
+        lfo2_target.setLayoutParams(layoutParams);
+        lfo2_target.setFillRGB(150,150,150);
+        lfo2.addView(lfo2_target);
+
+
+        lfo_section.addView(lfo2);
+
+        row2.addView(lfo_section);
 
         LinearLayout filter_adsr = new LinearLayout(this);
         filter_adsr.setOrientation(LinearLayout.HORIZONTAL);
@@ -371,11 +522,6 @@ public class KosmischeActivity extends Activity {
 
         row2.addView(filter_adsr);
         lLayout.addView(row2);
-
-        // FillerWidget w = new FillerWidget(this);
-        // w.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        // //knob.setLayoutParams(new LinearLayout.LayoutParams(500, 500, 0));
-        // lLayout.addView(w);
 
         LinearLayout steps = new LinearLayout(this);
         steps.setOrientation(LinearLayout.HORIZONTAL);
@@ -456,6 +602,7 @@ public class KosmischeActivity extends Activity {
         aux.addView(effects);
 
         lLayout.addView(aux);
+        lLayout.setBackgroundColor(android.R.color.white);
         setContentView(lLayout);
 
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
@@ -465,63 +612,133 @@ public class KosmischeActivity extends Activity {
         return sequence;
     }
     
-    public Handler getTimerHandler() {
-        return timerHandler;
+    public class TimerRunnable implements Runnable {
+        private Object mPauseLock = new Object();
+        private boolean mPaused = false;
+        private boolean mFinished = false;
+
+        public void onPause() {
+            synchronized (mPauseLock) {
+                mPaused = true;
+            }
+        }
+
+        public void onResume() {
+            synchronized (mPauseLock) {
+                mPaused = false;
+                mPauseLock.notifyAll();
+            }
+        }
+            
+        @Override
+        public void run() {
+            try {
+                while(true) {
+                    synchronized (mPauseLock) {
+                        while (mPaused) {
+                            try {
+                                mPauseLock.wait();
+                            } catch (InterruptedException e) {
+                            }
+                        }
+                    }
+                    Thread.sleep((long) (60000 / bpm / 4.0 - 1));
+                    sendControlMessage("trigger", 0);
+                    
+                    currentStep++;
+
+                    if(currentStep >= sequence.getLength()) {
+                        currentStep = 0;
+                    }
+
+                    // int previousStep = (currentStep - 1) % sequence.getLength();
+                    // if(currentStep == 0) {
+                    //     previousStep = sequence.getLength() - 1;
+                    // }
+
+                    // Log.d("Kosmische", "previousStep " + previousStep);
+                    // // restore preious step color
+                    // StepButton previousStepButton = stepButtons.get(previousStep);
+                    // if(previousFill != null) {
+                    //     Log.d("Kosmische", "altering previousStep");
+                    //     previousStepButton.setFill(previousFill);
+                    //     previousStepButton.setIsCurrentStep(false);
+                    //     previousStepButton.invalidate();
+                    // }
+
+                    // // set the current step active
+                    // StepButton currentStepButton = stepButtons.get(currentStep);
+                    // previousFill = currentStepButton.getFill();
+                    // currentStepButton.setFill(activeFill);
+                    // currentStepButton.setIsCurrentStep(true);
+                    // currentStepButton.invalidate();
+
+                    // get the note out of the sequence
+                    if(stepButtons.get(currentStep).isSelected()) {
+                        sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
+                        sendControlMessage("trigger", 1);
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
-    
-    public Runnable getTimerRunnable() {
+
+    public TimerRunnable getTimerRunnable() {
         return timerRunnable;
     }
 
-    private Handler timerHandler = new Handler();
-    private Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            currentStep++;
-            Log.d("Kosmische", "currentStep " + currentStep);
-            Log.d("Kosmische", "sequence length " + sequence.getLength());
-            if(currentStep >= sequence.getLength()) {
-                Log.d("Kosmische", "resetting");
-                currentStep = 0;
-            }
+    public Thread getTimerThread() {
+        return timerThread;
+    }
 
-            int previousStep = (currentStep - 1) % sequence.getLength();
-            if(currentStep == 0) {
-                previousStep = sequence.getLength() - 1;
-            }
+    // private Runnable timerRunnable = new Runnable() {
+    //     @Override
+    //     public void run() {
+    //         currentStep++;
 
-            Log.d("Kosmische", "previousStep " + previousStep);
-            // restore preious step color
-            StepButton previousStepButton = stepButtons.get(previousStep);
-            if(previousFill != null) {
-                Log.d("Kosmische", "altering previousStep");
-                previousStepButton.setFill(previousFill);
-                previousStepButton.setIsCurrentStep(false);
-                previousStepButton.invalidate();
-            }
+    //         if(currentStep >= sequence.getLength()) {
+    //             currentStep = 0;
+    //         }
 
-            // set the current step active
-            StepButton currentStepButton = stepButtons.get(currentStep);
-            previousFill = currentStepButton.getFill();
-            currentStepButton.setFill(activeFill);
-            currentStepButton.setIsCurrentStep(true);
-            currentStepButton.invalidate();
+    //         int previousStep = (currentStep - 1) % sequence.getLength();
+    //         if(currentStep == 0) {
+    //             previousStep = sequence.getLength() - 1;
+    //         }
 
-            // get the note out of the sequence
-            if(currentStepButton.isSelected()) {
-                sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
-                sendControlMessage("trigger", 1);
-                try {
-                    Thread.sleep((int) (60000 / bpm / 4.0 / 2.0));
-                }
-                catch(InterruptedException e) {
-                    e.printStackTrace();
-                }
-                sendControlMessage("trigger", 0);
-            }
-            timerHandler.postDelayed(this, (int) (60000 / bpm / 4.0));
-        }
-    };
+    //         // Log.d("Kosmische", "previousStep " + previousStep);
+    //         // // restore preious step color
+    //         // StepButton previousStepButton = stepButtons.get(previousStep);
+    //         // if(previousFill != null) {
+    //         //     Log.d("Kosmische", "altering previousStep");
+    //         //     previousStepButton.setFill(previousFill);
+    //         //     previousStepButton.setIsCurrentStep(false);
+    //         //     previousStepButton.invalidate();
+    //         // }
+
+    //         // // set the current step active
+    //         // StepButton currentStepButton = stepButtons.get(currentStep);
+    //         // previousFill = currentStepButton.getFill();
+    //         // currentStepButton.setFill(activeFill);
+    //         // currentStepButton.setIsCurrentStep(true);
+    //         // currentStepButton.invalidate();
+
+    //         // get the note out of the sequence
+    //         if(stepButtons.get(currentStep).isSelected()) {
+    //             sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
+    //             sendControlMessage("trigger", 1);
+    //             try {
+    //                 Thread.sleep((int) (60000 / bpm / 4.0 / 4.0));
+    //             }
+    //             catch(InterruptedException e) {
+    //                 e.printStackTrace();
+    //             }
+    //             sendControlMessage("trigger", 0);
+    //         }
+    //         handler.postDelayed(this, (int) (60000 / bpm / 4.0));
+    //     }
+    // };
 
     public void setBPM(float bpm) {
         this.bpm = bpm;
@@ -530,6 +747,7 @@ public class KosmischeActivity extends Activity {
     @Override
     public void onPause() {
         super.onPause();
+        timerRunnable.onPause();
         try {
             // Free up audio when the activity is not in the foreground
             if (superCollider != null) superCollider.stop();

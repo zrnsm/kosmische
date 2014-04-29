@@ -74,6 +74,7 @@ public class Knob extends KosmischeWidget {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         radius = width / 2;
+        drawBackground(canvas);
         drawOutline(canvas);
         drawFill(canvas);
         drawLabel(canvas);

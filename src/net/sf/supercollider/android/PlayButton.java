@@ -13,19 +13,22 @@ public class PlayButton extends Button {
 
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    Log.d("Kosmische", event.toString());
                     Rect hitRect = new Rect();
                     PlayButton.this.getHitRect(hitRect);
                     
                     if ((event.getAction() == MotionEvent.ACTION_UP) || (event.getAction() == MotionEvent.ACTION_POINTER_UP) 
                         && hitRect.contains((int) event.getX(), (int) event.getY())) {
-                        Log.d("Kosmische", event.toString());
                         isSelected = !isSelected;
                         KosmischeActivity activity = (KosmischeActivity) context;
                         if(!isSelected) {
-                            activity.getTimerHandler().removeCallbacks(activity.getTimerRunnable());
+                            activity.getTimerRunnable().onPause();
                         } else {
-                            activity.getTimerHandler().postDelayed(activity.getTimerRunnable(), 0);
+                            if(activity.getTimerThread().isAlive()) {
+                                activity.getTimerRunnable().onResume();
+                            }
+                            else {
+                                activity.getTimerThread().start();
+                            }
                         }
                         invalidate();
                     }

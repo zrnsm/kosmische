@@ -125,6 +125,7 @@ public class ChoiceButtonGroup extends KosmischeWidget {
 
     protected void onDraw(Canvas canvas) {
         Log.d("Kosmische", "drawing choice group");
+        drawBackground(canvas);
         drawOutline(canvas);
         drawDividers(canvas);
         drawFill(canvas);
