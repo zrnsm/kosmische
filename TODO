@@ -1,26 +1,4 @@
-- better - change lfo ranges depending on target
-- mostly done - more accurate scheduling
-  - separate thread
-  - nanoTime
-
-- done - LFOs and controls 
-  - two lfos with sin, tri, pulse, noise
-  - frequency
-  - depth
-  
-  - lfo targets
-    osc1_freq
-    osc1_width
-    osc2_freq
-    osc2_width
-    delay_time
-    decay_time
-    cutoff
-    resonance
-
-- done - osc level control (slider 1, 10)
-- done - delay mix control (slider -1, 1)
-
+- play with timer scheduling to figure out envelop trigger issue (seems to result in a legato sounding sequence in certain situations)
 - alternative filter types
 - patch memory
 - sequence memory
@@ -32,5 +10,5 @@
 - Layout issues
   - label orientation
   - show value where relavent?
-  - tempo slider
+  - tempo slider too wide
   - aux knobs, switch to sliders?
