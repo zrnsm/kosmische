@@ -1,14 +1,7 @@
-- play with timer scheduling to figure out envelop trigger issue (seems to result in a legato sounding sequence in certain situations)
-- alternative filter types
-- patch memory
-- sequence memory
+- show bpm on tempo slider
 - sequence generation from scales
-- reverse sequence
-
-- fix default values and ui sync
-
-- Layout issues
-  - label orientation
-  - show value where relavent?
-  - tempo slider too wide
-  - aux knobs, switch to sliders?
+- patch memory
+- load a reasonable default patch
+- sequence memory
+- fix 'has stopped' issue
+- alternative filter types

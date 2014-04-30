@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.lang.Thread;
 import java.lang.InterruptedException;
+import android.graphics.Color;
 
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
@@ -43,6 +44,7 @@ public class KosmischeActivity extends Activity {
     private HashMap<Integer, String> parameterMap;
     private float bpm = 120.0f;
     private int currentStep = -1;
+    private boolean sequenceReversed = false;
     private TimerRunnable timerRunnable = new TimerRunnable();
     private Thread timerThread = new Thread(timerRunnable);
 
@@ -156,12 +158,6 @@ public class KosmischeActivity extends Activity {
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
-
-
-        // handlerThread = new HandlerThread("Timer");
-        // handlerThread.start();
-        // handler = new Handler(handlerThread.getLooper());
-
         sequence = new Sequence(16);
         stepButtons = new ArrayList<StepButton>(sequenceLength);
         activeFill = new Paint();
@@ -175,24 +171,20 @@ public class KosmischeActivity extends Activity {
         lLayout.setLayoutParams(layoutParams);
 
         LinearLayout row1 = new LinearLayout(this);
-        row1.setBackgroundColor(android.R.color.white);
         row1.setOrientation(LinearLayout.HORIZONTAL);
         row1.setLayoutParams(layoutParams);
 
         LinearLayout osc1_container = new LinearLayout(this);
         osc1_container.setOrientation(LinearLayout.HORIZONTAL);
-        osc1_container.setBackgroundColor(android.R.color.white);
         osc1_container.setLayoutParams(layoutParams);
 
         // osc 1 section
         LinearLayout osc1_section = new LinearLayout(this);
         osc1_section.setOrientation(LinearLayout.VERTICAL);
-        osc1_section.setBackgroundColor(android.R.color.white);
         osc1_section.setLayoutParams(layoutParams);
 
         LinearLayout osc1_section_top = new LinearLayout(this);
         osc1_section_top.setOrientation(LinearLayout.HORIZONTAL);
-        osc1_section_top.setBackgroundColor(android.R.color.white);
         osc1_section_top.setLayoutParams(layoutParams);
 
         ChoiceButtonGroup osc1_type = new ChoiceButtonGroup(this, 
@@ -203,7 +195,7 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.addView(osc1_type);
 
         Slider osc1_tune = new Slider(this, registerWidget("osc1_tune"), Slider.HORIZONTAL);
-        osc1_tune.setLabelText("osc1_tune");
+        osc1_tune.setLabelText("coarse tune");
         osc1_tune.setRange(-12, 12);
         osc1_tune.setIntegerValued(true);
         osc1_tune.setLayoutParams(layoutParams);
@@ -212,11 +204,10 @@ public class KosmischeActivity extends Activity {
 
         LinearLayout osc1_section_bottom = new LinearLayout(this);
         osc1_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
-        osc1_section_bottom.setBackgroundColor(android.R.color.white);
         osc1_section_bottom.setLayoutParams(layoutParams);
 
         Slider osc1_width = new Slider(this, registerWidget("osc1_width"), Slider.HORIZONTAL);
-        osc1_width.setLabelText("osc1_width");
+        osc1_width.setLabelText("pulsewidth");
         osc1_width.setRange(0, 1);
         osc1_width.setLayoutParams(layoutParams);
         osc1_width.setFillRGB(190,190,190);
@@ -224,7 +215,7 @@ public class KosmischeActivity extends Activity {
         osc1_section_bottom.addView(osc1_width);
 
         Slider osc1_detune = new Slider(this, registerWidget("osc1_detune"), Slider.HORIZONTAL);
-        osc1_detune.setLabelText("osc1_detune");
+        osc1_detune.setLabelText("detune");
         osc1_detune.setRange(-20, 20);
         osc1_detune.setLayoutParams(layoutParams);
         osc1_detune.setFillRGB(190,190,190);
@@ -234,7 +225,7 @@ public class KosmischeActivity extends Activity {
         osc1_section.addView(osc1_section_bottom);
 
         Slider osc1_level = new Slider(this, registerWidget("osc1_level"), Slider.VERTICAL);
-        osc1_level.setLabelText("osc1_level");
+        osc1_level.setLabelText("level");
         osc1_level.setRange(1, 10);
         osc1_level.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 4f));
         osc1_level.setFillRGB(190,190,190);
@@ -337,7 +328,7 @@ public class KosmischeActivity extends Activity {
         osc2_section_top.addView(osc2_type);
 
         Slider osc2_tune = new Slider(this, registerWidget("osc2_tune"), Slider.HORIZONTAL);
-        osc2_tune.setLabelText("osc2_tune");
+        osc2_tune.setLabelText("coarse tune");
         osc2_tune.setRange(-12, 12);
         osc2_tune.setIntegerValued(true);
         osc2_tune.setLayoutParams(layoutParams);
@@ -349,21 +340,21 @@ public class KosmischeActivity extends Activity {
         osc2_section_bottom.setLayoutParams(layoutParams);
 
         Slider osc2_width = new Slider(this, registerWidget("osc2_width"), Slider.HORIZONTAL);
-        osc2_width.setLabelText("osc2_width");
+        osc2_width.setLabelText("pulsewidth");
         osc2_width.setRange(0, 1);
         osc2_width.setLayoutParams(layoutParams);
         osc2_width.setFillRGB(150,150,150);
         osc2_section_bottom.addView(osc2_width);
 
         Slider osc2_detune = new Slider(this, registerWidget("osc2_detune"), Slider.HORIZONTAL);
-        osc2_detune.setLabelText("osc2_detune");
+        osc2_detune.setLabelText("detune");
         osc2_detune.setRange(-20, 20);
         osc2_detune.setLayoutParams(layoutParams);
         osc2_detune.setFillRGB(150,150,150);
         osc2_section_bottom.addView(osc2_detune);
 
         Slider osc2_level = new Slider(this, registerWidget("osc2_level"), Slider.VERTICAL);
-        osc2_level.setLabelText("osc2_level");
+        osc2_level.setLabelText("level");
         osc2_level.setRange(1, 10);
         osc2_level.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 4f));
         osc2_level.setFillRGB(190,190,190);
@@ -387,35 +378,41 @@ public class KosmischeActivity extends Activity {
 
         ChoiceButtonGroup lfo1_type = new ChoiceButtonGroup(this, 
                                                             registerWidget("lfo1_type"),
-                                                            new String[] {"S", "T", "P", "N"});
+                                                            new String[] {"Sin", "Tri", "Rect", "Rand"});
         lfo1_type.setLayoutParams(layoutParams);
         lfo1_type.setFillRGB(190,190,190);
         lfo1.addView(lfo1_type);
+
+        LinearLayout lfo1_freq_depth = new LinearLayout(this);
+        lfo1_freq_depth.setOrientation(LinearLayout.VERTICAL);
+        lfo1_freq_depth.setLayoutParams(layoutParams);
 
         final Slider lfo1_freq = new Slider(this, registerWidget("lfo1_freq"), Slider.HORIZONTAL);
         lfo1_freq.setLabelText("freq");
         lfo1_freq.setRange(0, 5);
         lfo1_freq.setLayoutParams(layoutParams);
         lfo1_freq.setFillRGB(150,150,150);
-        lfo1.addView(lfo1_freq);
+        lfo1_freq_depth.addView(lfo1_freq);
 
         final Slider lfo1_depth = new Slider(this, registerWidget("lfo1_depth"), Slider.HORIZONTAL);
         lfo1_depth.setLabelText("depth");
         lfo1_depth.setRange(0, 200);
         lfo1_depth.setLayoutParams(layoutParams);
         lfo1_depth.setFillRGB(150,150,150);
-        lfo1.addView(lfo1_depth);
+        lfo1_freq_depth.addView(lfo1_depth);
+
+        lfo1.addView(lfo1_freq_depth);
 
         final ScrollBox lfo1_target = new ScrollBox(this, 
                                                             registerWidget("lfo1_target"),
-                                                            new String[] {"O1F", 
-                                                                          "O1W", 
-                                                                          "O2F", 
-                                                                          "O2W", 
-                                                                          "DT",
-                                                                          "DecT",
-                                                                          "Cut",
-                                                                          "Reso"
+                                                            new String[] {"osc1 freq", 
+                                                                          "osc1 width", 
+                                                                          "osc2 freq", 
+                                                                          "osc2 width", 
+                                                                          "d. time",
+                                                                          "feedback",
+                                                                          "cutoff",
+                                                                          "resonance"
                                                             });
 
         final float[][] lfoDepthRanges = {
@@ -433,6 +430,7 @@ public class KosmischeActivity extends Activity {
                 public void run() {
                     float[] range = lfoDepthRanges[lfo1_target.getSelectedValue()];
                     lfo1_depth.setRange(range[0], range[1]);
+                    sendControlMessage(lfo1_depth.getId(), lfo1_depth.getValue());
                 }
             });
 
@@ -447,47 +445,53 @@ public class KosmischeActivity extends Activity {
 
         ChoiceButtonGroup lfo2_type = new ChoiceButtonGroup(this, 
                                                             registerWidget("lfo2_type"),
-                                                            new String[] {"S", "T", "P", "N"});
+                                                            new String[] {"Sin", "Tri", "Rect", "Rand"});
         lfo2_type.setLayoutParams(layoutParams);
         lfo2_type.setFillRGB(190,190,190);
         lfo2.addView(lfo2_type);
+
+        LinearLayout lfo2_freq_depth = new LinearLayout(this);
+        lfo2_freq_depth.setOrientation(LinearLayout.VERTICAL);
+        lfo2_freq_depth.setLayoutParams(layoutParams);
 
         Slider lfo2_freq = new Slider(this, registerWidget("lfo2_freq"), Slider.HORIZONTAL);
         lfo2_freq.setLabelText("freq");
         lfo2_freq.setRange(0, 5);
         lfo2_freq.setLayoutParams(layoutParams);
         lfo2_freq.setFillRGB(150,150,150);
-        lfo2.addView(lfo2_freq);
+        lfo2_freq_depth.addView(lfo2_freq);
 
         final Slider lfo2_depth = new Slider(this, registerWidget("lfo2_depth"), Slider.HORIZONTAL);
         lfo2_depth.setLabelText("depth");
         lfo2_depth.setRange(0, 200);
         lfo2_depth.setLayoutParams(layoutParams);
         lfo2_depth.setFillRGB(150,150,150);
-        lfo2.addView(lfo2_depth);
+        lfo2_freq_depth.addView(lfo2_depth);
+
+        lfo2.addView(lfo2_freq_depth);
 
         final ScrollBox lfo2_target = new ScrollBox(this, 
                                                             registerWidget("lfo2_target"),
-                                                            new String[] {"O1F", 
-                                                                          "O1W", 
-                                                                          "O2F", 
-                                                                          "O2W", 
-                                                                          "DT",
-                                                                          "DecT",
-                                                                          "Cut",
-                                                                          "Reso"
+                                                            new String[] {"osc1 freq", 
+                                                                          "osc1 width", 
+                                                                          "osc2 freq", 
+                                                                          "osc2 width", 
+                                                                          "d. time",
+                                                                          "feedback",
+                                                                          "cutoff",
+                                                                          "resonance"
                                               });
 
         lfo2_target.setOnChangeRunnable(new Runnable() {
                 public void run() {
                     float[] range = lfoDepthRanges[lfo2_target.getSelectedValue()];
                     lfo2_depth.setRange(range[0], range[1]);
+                    sendControlMessage(lfo2_depth.getId(), lfo2_depth.getValue());
                 }
             });
         lfo2_target.setLayoutParams(layoutParams);
         lfo2_target.setFillRGB(150,150,150);
         lfo2.addView(lfo2_target);
-
 
         lfo_section.addView(lfo2);
 
@@ -538,83 +542,88 @@ public class KosmischeActivity extends Activity {
         LinearLayout steps = new LinearLayout(this);
         steps.setOrientation(LinearLayout.HORIZONTAL);
         steps.setLayoutParams(layoutParams);
+        steps.setBackgroundColor(Color.BLACK);
 
         createStepButtons(steps);
+        
         lLayout.addView(steps);
 
         LinearLayout aux = new LinearLayout(this);
         aux.setOrientation(LinearLayout.HORIZONTAL);
         aux.setLayoutParams(layoutParams);
 
-        LinearLayout playTempo = new LinearLayout(this);
-        playTempo.setOrientation(LinearLayout.HORIZONTAL);
-        playTempo.setLayoutParams(layoutParams);
+        LinearLayout sequenceControl = new LinearLayout(this);
+        sequenceControl.setOrientation(LinearLayout.HORIZONTAL);
+        sequenceControl.setLayoutParams(layoutParams);
+
+        LinearLayout playReverse = new LinearLayout(this);
+        playReverse.setOrientation(LinearLayout.VERTICAL);
+        playReverse.setLayoutParams(layoutParams);
 
         PlayButton playButton = new PlayButton(this, 1000);
-        playButton.setLabelText("Play");
-        playButton.setFillRGB(0, 200, 0);
+        playButton.setLabelText("play");
         playButton.setLayoutParams(layoutParams);
-        playTempo.addView(playButton);
+        playReverse.addView(playButton);
 
-        TempoSlider tempoSlider = new TempoSlider(this, 1001, Slider.VERTICAL);
-        tempoSlider.setLabelText("Tempo");
+        ReverseButton reverseButton = new ReverseButton(this, 1001);
+        reverseButton.setLabelText("reverse");
+        reverseButton.setLayoutParams(layoutParams);
+        playReverse.addView(reverseButton);
+
+        sequenceControl.addView(playReverse);
+
+        TempoSlider tempoSlider = new TempoSlider(this, 1002, Slider.VERTICAL);
+        tempoSlider.setLabelText("tempo");
         tempoSlider.setRange(1, 500);
         tempoSlider.setFillRGB(0, 200, 0);
         tempoSlider.setLayoutParams(layoutParams);
-        playTempo.addView(tempoSlider);
+        sequenceControl.addView(tempoSlider);
         
-        aux.addView(playTempo);
+        aux.addView(sequenceControl);
 
         LinearLayout effects = new LinearLayout(this);
         effects.setOrientation(LinearLayout.HORIZONTAL);
         effects.setLayoutParams(layoutParams);
 
-        Knob delayMixKnob = new Knob(this, registerWidget("delay_mix"));
-        delayMixKnob.setLabelText("delay mix");
-        delayMixKnob.setRange(-1, 1);
-        delayMixKnob.setLayoutParams(layoutParams);
-        delayMixKnob.setFillRGB(210,210,210);
-        effects.addView(delayMixKnob);
+        Slider delayMix = new Slider(this, registerWidget("delay_mix"), Slider.VERTICAL);
+        delayMix.setLabelText("delay mix");
+        delayMix.setLayoutParams(layoutParams);
+        delayMix.setRange(-1, 1);
+        effects.addView(delayMix);
 
-        Knob delaytimeKnob = new Knob(this, registerWidget("delaytime"));
-        delaytimeKnob.setLabelText("delay time");
-        delaytimeKnob.setRange(0, 2);
-        delaytimeKnob.setLayoutParams(layoutParams);
-        delaytimeKnob.setFillRGB(210,210,210);
-        effects.addView(delaytimeKnob);
+        Slider delayTime = new Slider(this, registerWidget("delaytime"), Slider.VERTICAL);
+        delayTime.setLabelText("delay time");
+        delayTime.setLayoutParams(layoutParams);
+        delayTime.setRange(0, 2);
+        effects.addView(delayTime);
 
-        Knob feedbackKnob = new Knob(this, registerWidget("decaytime"));
-        feedbackKnob.setLabelText("fb");
-        feedbackKnob.setRange(0, 10);
-        feedbackKnob.setLayoutParams(layoutParams);
-        feedbackKnob.setFillRGB(210,210,210);
-        effects.addView(feedbackKnob);
+        Slider decayTime = new Slider(this, registerWidget("decaytime"), Slider.VERTICAL);
+        decayTime.setLabelText("feedback");
+        decayTime.setLayoutParams(layoutParams);
+        decayTime.setRange(0, 10);
+        effects.addView(decayTime);
 
-        Knob reverbMixKnob = new Knob(this, registerWidget("reverb_mix"));
-        reverbMixKnob.setLabelText("r mix");
-        reverbMixKnob.setRange(0, 1);
-        reverbMixKnob.setLayoutParams(layoutParams);
-        reverbMixKnob.setFillRGB(210,210,210);
-        effects.addView(reverbMixKnob);
+        Slider reverbMix = new Slider(this, registerWidget("reverb_mix"), Slider.VERTICAL);
+        reverbMix.setLabelText("rev. mix");
+        reverbMix.setLayoutParams(layoutParams);
+        reverbMix.setRange(0, 1);
+        effects.addView(reverbMix);
 
-        Knob roomSizeKnob = new Knob(this, registerWidget("reverb_room_size"));
-        roomSizeKnob.setLabelText("r size");
-        roomSizeKnob.setRange(0, 1);
-        roomSizeKnob.setLayoutParams(layoutParams);
-        roomSizeKnob.setFillRGB(210,210,210);
-        effects.addView(roomSizeKnob);
+        Slider roomSize = new Slider(this, registerWidget("reverb_room_size"), Slider.VERTICAL);
+        roomSize.setLabelText("room size");
+        roomSize.setLayoutParams(layoutParams);
+        roomSize.setRange(0, 1);
+        effects.addView(roomSize);
 
-        Knob reverbDamp = new Knob(this, registerWidget("reverb_damp"));
-        reverbDamp.setLabelText("r damp");
-        reverbDamp.setRange(0, 1);
+        Slider reverbDamp = new Slider(this, registerWidget("reverb_damp"), Slider.VERTICAL);
+        reverbDamp.setLabelText("damp");
         reverbDamp.setLayoutParams(layoutParams);
-        reverbDamp.setFillRGB(210,210,210);
+        reverbDamp.setRange(0, 1);
         effects.addView(reverbDamp);
 
         aux.addView(effects);
 
         lLayout.addView(aux);
-        lLayout.setBackgroundColor(android.R.color.white);
         setContentView(lLayout);
 
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
@@ -654,15 +663,26 @@ public class KosmischeActivity extends Activity {
                             }
                         }
                     }
-                    Thread.sleep((long) (60000 / bpm / 4.0 - 1));
+                    Thread.sleep((long) (60000 / bpm / 2.0));
                     sendControlMessage("trigger", 0);
+                    Thread.sleep((long) (60000 / bpm / 2.0 - 1));
                     
-                    currentStep++;
+                    if(sequenceReversed) {
+                        currentStep--;
+                    }
+                    else {
+                        currentStep++;
+                    }
+
+                    if(currentStep < 0) {
+                        currentStep = sequence.getLength() - 1;
+                    }
 
                     if(currentStep >= sequence.getLength()) {
                         currentStep = 0;
                     }
 
+                    // TODO: move step indicator update into another thread
                     // int previousStep = (currentStep - 1) % sequence.getLength();
                     // if(currentStep == 0) {
                     //     previousStep = sequence.getLength() - 1;
@@ -754,6 +774,10 @@ public class KosmischeActivity extends Activity {
 
     public void setBPM(float bpm) {
         this.bpm = bpm;
+    }
+
+    public void setSequenceReversed(boolean sequenceReversed) {
+        this.sequenceReversed = sequenceReversed;
     }
 	
     @Override

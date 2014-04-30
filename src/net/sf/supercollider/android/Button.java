@@ -13,10 +13,16 @@ import android.util.Log;
 
 public class Button extends KosmischeWidget {
     protected boolean isSelected = false;
-
+    protected boolean limitToSquare = true;
+    
     public Button(Context context, int id) {
+        this(context, id, true);
+    }
+
+    public Button(Context context, int id, boolean limitToSquare) {
         super(context);
         this.setId(id);
+        this.limitToSquare = limitToSquare;
 
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
@@ -42,7 +48,12 @@ public class Button extends KosmischeWidget {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
         int effectiveWidth = widthSize > heightSize ? heightSize : widthSize;
-        setMeasuredDimension(effectiveWidth, effectiveWidth);
+        if(limitToSquare) {
+            setMeasuredDimension(effectiveWidth, effectiveWidth);
+        }
+        else {
+            setMeasuredDimension(widthSize, heightSize);
+        }
     }
 
     protected void drawOutline(Canvas canvas) {

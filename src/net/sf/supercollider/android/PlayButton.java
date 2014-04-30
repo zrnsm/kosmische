@@ -22,6 +22,7 @@ public class PlayButton extends Button {
                         KosmischeActivity activity = (KosmischeActivity) context;
                         if(!isSelected) {
                             activity.getTimerRunnable().onPause();
+                            activity.sendControlMessage("trigger", 0);
                         } else {
                             if(activity.getTimerThread().isAlive()) {
                                 activity.getTimerRunnable().onResume();
@@ -35,5 +36,15 @@ public class PlayButton extends Button {
                     return true;
                 }
             });
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int effectiveWidth = widthSize > heightSize ? heightSize : widthSize;
+        setMeasuredDimension(widthSize, heightSize);
     }
 }

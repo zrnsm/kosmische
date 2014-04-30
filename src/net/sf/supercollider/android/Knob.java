@@ -58,6 +58,7 @@ public class Knob extends KosmischeWidget {
     }
 
     protected void drawOutline(Canvas canvas) {
+        outline.setStrokeWidth(2.0f);
         canvas.drawArc(new RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius), 135, 270, false, outline);
         canvas.drawArc(new RectF(centerX - (radius / 2), centerY - (radius / 2), centerX + (radius / 2), centerY + (radius / 2)), 135, 270, false, outline);
         float r_offset = (float) (radius / Math.sqrt(2));

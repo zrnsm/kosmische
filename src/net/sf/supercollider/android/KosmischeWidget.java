@@ -29,6 +29,8 @@ public abstract class KosmischeWidget extends View {
     protected Paint fill;
     protected Paint background;
 
+    private boolean firstDraw = true;
+
     //   add default colors
     //    protected Paint defaultFill;
 
@@ -49,6 +51,7 @@ public abstract class KosmischeWidget extends View {
         labelPaint.setARGB(255, 100, 100, 100);
         labelPaint.setTypeface(Typeface.MONOSPACE);
         labelPaint.setTextSize(25);
+        labelPaint.setTextAlign(Paint.Align.CENTER);
         setWillNotDraw(false);
 
         background = new Paint();
@@ -103,6 +106,10 @@ public abstract class KosmischeWidget extends View {
         return position;
     }
 
+    public void setPosition(float position) {
+        this.position = position;
+    }
+
     public float getValue() {
         float value = minimumValue + (getPosition() * (maximumValue - minimumValue));
         if(integerValued) {
@@ -124,7 +131,9 @@ public abstract class KosmischeWidget extends View {
 
     protected void drawLabel(Canvas canvas) {
         String label = valueLabelEnabled ? labelText + " " + getValue() : labelText;
-        canvas.drawText(label, centerX, centerY, labelPaint);
+        int x = (int) (width / 2);
+        int y = (int) ((height / 2) - ((labelPaint.descent() + labelPaint.ascent()) / 2)); 
+        canvas.drawText(label, x, y, labelPaint);
     }
 
     public void onConfigurationChanged(Configuration newConfig) {
@@ -147,8 +156,6 @@ public abstract class KosmischeWidget extends View {
     }
 
     protected void onDraw(Canvas canvas) {
-        Log.d("LayoutTest", this.labelText + " drawing");
-        Log.d("LayoutTest", this.labelText + " clipbounds " + canvas.getClipBounds());
         drawBackground(canvas);
         drawOutline(canvas);
         drawFill(canvas);
