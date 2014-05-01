@@ -31,7 +31,7 @@ public class Slider extends KosmischeWidget {
                         h_position = Math.max(0, Math.min(1, event.getX() / width));
                         v_position = Math.max(0, Math.min(1, (height - event.getY()) / height));
                         invalidate();
-                        activity.sendControlMessage(Slider.this.getId(), getValue());
+                        activity.sendControlMessage(Slider.this.getId(), getValue(), getPosition());
                     }
                     return true;
                 }

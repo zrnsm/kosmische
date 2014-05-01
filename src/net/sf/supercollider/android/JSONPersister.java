@@ -26,16 +26,6 @@ public class JSONPersister {
         this.fileName = fileName;
     }
 
-    // public JSONPersister(Context context, Map keyValuePairs, String fileName) {
-    //     this.context = context;
-    //     this.fileName = fileName;
-    //     setKeyValuePairs(keyValuePairs);
-    // }
-
-    // public void setKeyValuePairs(Map keyValuePairs) {
-    //     this.json = new JSONObject(keyValuePairs);
-    // }
-
     public void setJSONObject(JSONObject json) {
         this.json = json;
     }

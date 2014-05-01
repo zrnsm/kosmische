@@ -48,7 +48,7 @@ public class ScrollBox extends KosmischeWidget {
                             }
                             
                             distanceFromPreviousChange = 0;
-                            activity.sendControlMessage(ScrollBox.this.getId(), selectedValue);
+                            activity.sendControlMessage(ScrollBox.this.getId(), selectedValue, selectedValue);
                         }
 
                         distanceFromPreviousChange++;
@@ -72,9 +72,7 @@ public class ScrollBox extends KosmischeWidget {
 
     public void setSelectedValue(int i) {
         this.selectedValue = i;
-        if(activity != null) {
-            activity.sendControlMessage(getId(), getSelectedValue());
-        }
+        activity.sendControlMessage(getId(), selectedValue, selectedValue);
 
         invalidate();
     }

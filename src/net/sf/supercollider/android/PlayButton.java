@@ -22,7 +22,7 @@ public class PlayButton extends Button {
                         KosmischeActivity activity = (KosmischeActivity) context;
                         if(!isSelected) {
                             activity.getTimerRunnable().onPause();
-                            activity.sendControlMessage("trigger", 0);
+                            activity.sendControlMessage("trigger", 0, 0);
                         } else {
                             if(activity.getTimerThread().isAlive()) {
                                 activity.getTimerRunnable().onResume();

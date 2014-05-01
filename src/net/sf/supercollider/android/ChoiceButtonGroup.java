@@ -45,14 +45,13 @@ public class ChoiceButtonGroup extends KosmischeWidget {
                     }
 
                     invalidate();
-                    activity.sendControlMessage(getId(), getSelectedAlternative());
+                    activity.sendControlMessage(getId(), getSelectedAlternative(), getSelectedAlternative());
                     return true;
                 }
             });
     }
 
     public void setPosition(float i) {
-        Log.d("Kosmische", "setting position choicebutton");
         setSelectedAlternative((int) i);
     }
 
@@ -60,10 +59,7 @@ public class ChoiceButtonGroup extends KosmischeWidget {
         if(i >= 0 && i < numberOfAlternatives) {
             selectedAlternative = i;
         }
-        Log.d("Kosmische", "setting alternative");
-        if(activity != null) {
-            activity.sendControlMessage(getId(), getSelectedAlternative());
-        }
+        activity.sendControlMessage(getId(), getSelectedAlternative(), getSelectedAlternative());
         invalidate();
     }
 

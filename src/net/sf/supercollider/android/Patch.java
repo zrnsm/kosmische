@@ -17,6 +17,15 @@ public class Patch {
         return patchValues;
     }
 
+    public void setValue(String name, float value) {
+        try {        
+            getPatchValues().put(name, value);
+        }
+        catch(JSONException e) {
+            Log.d("Kosmische", "Failed to update patch parameter value " + e);
+        }
+    }
+
     public void setToDefault() {
         try {
             patchValues.put("osc1_level", 0.5f);

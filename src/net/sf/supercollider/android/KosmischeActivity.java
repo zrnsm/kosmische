@@ -39,6 +39,7 @@ import java.io.FileNotFoundException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.io.File;
 
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
@@ -61,6 +62,7 @@ public class KosmischeActivity extends Activity {
     private Paint activeFill;
     private Paint previousFill;
     private int nextWidgetId = 0;
+    private final int PATCH_MEMORY_LOCATIONS = 127;
 
     private int registerWidget(String parameter) {
         int id = nextWidgetId;
@@ -69,7 +71,7 @@ public class KosmischeActivity extends Activity {
         return id;
     }
 
-    public void sendControlMessage(String parameterName, float value) {
+    public void sendControlMessage(String parameterName, float value, float position) {
         OscMessage controlMessage = new OscMessage( new Object[] {
                 "/n_set", defaultNodeId, parameterName, value
             });
@@ -85,10 +87,13 @@ public class KosmischeActivity extends Activity {
             
             e.printStackTrace();
         }
+        if(!parameterName.equals("trigger") && !parameterName.equals("note")) {
+            patch.setValue(parameterName, position);
+        }
     }
     
-    public void sendControlMessage(int id, float value) {
-        sendControlMessage(parameterMap.get(id), value);
+    public void sendControlMessage(int id, float value, float position) {
+        sendControlMessage(parameterMap.get(id), value, position);
     }
 
     private class ScServiceConnection implements ServiceConnection {
@@ -108,23 +113,20 @@ public class KosmischeActivity extends Activity {
         }
     }
 
+    public Patch getPatch() {
+        return patch;
+    }
+
+
     private void loadPatch() {
- 
         try {
             JSONObject values = patch.getPatchValues();
             for(KosmischeWidget widget : widgets) {
                 String param = parameterMap.get(widget.getId());
-                Log.d("Kosmische", param);
-                //Log.d("Kosmische", ((Integer) widget.getId()).toString());
-                //Log.d("Kosmsiche", "what the fuck");
-                // Log.d("Kosmsiche", ((Boolean) (parameterMap == null)).toString());
-                Log.d("Kosmische", values.toString());
-                // Log.d("Kosmsiche", parameterMap.get(widget.getId()));
-                Log.d("Kosmische", values.get(param).toString());
-                widget.setPosition(((Double) values.get(param)).floatValue());
+                widget.setPosition(((Number) values.get(param)).floatValue());
             }
         }
-        catch(JSONException e) {
+        catch(Exception e) {
             Log.d("Kosmische", "failed to load patch " + e);
         }
     }
@@ -426,7 +428,7 @@ public class KosmischeActivity extends Activity {
                 public void run() {
                     float[] range = lfoDepthRanges[lfo1_target.getSelectedValue()];
                     lfo1_depth.setRange(range[0], range[1]);
-                    sendControlMessage(lfo1_depth.getId(), lfo1_depth.getValue());
+                    sendControlMessage(lfo1_depth.getId(), lfo1_depth.getValue(), lfo1_depth.getPosition());
                 }
             });
 
@@ -483,7 +485,7 @@ public class KosmischeActivity extends Activity {
                 public void run() {
                     float[] range = lfoDepthRanges[lfo2_target.getSelectedValue()];
                     lfo2_depth.setRange(range[0], range[1]);
-                    sendControlMessage(lfo2_depth.getId(), lfo2_depth.getValue());
+                    sendControlMessage(lfo2_depth.getId(), lfo2_depth.getValue(), lfo2_depth.getPosition());
                 }
             });
         lfo2_target.setLayoutParams(layoutParams);
@@ -581,7 +583,7 @@ public class KosmischeActivity extends Activity {
 
 
 
-        String[] patternLabels = new String[127];
+        String[] patternLabels = new String[PATCH_MEMORY_LOCATIONS];
         for(int i = 0; i < patternLabels.length; i++) {
             patternLabels[i] = "pattern " + (Integer) (i + 1);
         }
@@ -602,15 +604,19 @@ public class KosmischeActivity extends Activity {
         patternLoad.setActionRunnable(new Runnable() {
                 public void run() {
                     try {
-                        sequencePersister.setFileName("pattern" + patternSelection.getSelectedValue());
-                        sequencePersister.load();
-                        sequence.loadFromJSON(sequencePersister.getJSONObject());
-                        for(int i = 0; i < sequence.getLength(); i++) {
-                            stepButtons.get(i).setLabelText(sequence.getNote(i).getMidiNumber().toString());
-                            stepButtons.get(i).setSelected(sequence.getEnabled(i));
-                        }
-                        for(StepButton button : stepButtons) {
-                            button.invalidate();
+                        String filePath = "pattern" + patternSelection.getSelectedValue();
+                        File file = new File(getFilesDir(), filePath);
+                        if(file.exists()) {
+                            sequencePersister.setFileName("pattern" + patternSelection.getSelectedValue());
+                            sequencePersister.load();
+                            sequence.loadFromJSON(sequencePersister.getJSONObject());
+                            for(int i = 0; i < sequence.getLength(); i++) {
+                                stepButtons.get(i).setLabelText(sequence.getNote(i).getMidiNumber().toString());
+                                stepButtons.get(i).setSelected(sequence.getEnabled(i));
+                            }
+                            for(StepButton button : stepButtons) {
+                                button.invalidate();
+                            }
                         }
                         patternLoad.setSelected(false);
                         patternLoad.invalidate();
@@ -654,10 +660,13 @@ public class KosmischeActivity extends Activity {
 
         persistance.addView(patternPersistance);
 
-        final ScrollBox patchSelection = new ScrollBox(this, 
-                                                            registerWidget("nothing"),
-                                                            new String[] {"patch 1"
-                                                       });
+        String[] patchLabels = new String[PATCH_MEMORY_LOCATIONS];
+        for(int i = 0; i < patternLabels.length; i++) {
+            patchLabels[i] = "patch " + (Integer) (i + 1);
+        }
+
+        final ScrollBox patchSelection = new ScrollBox(this, registerWidget("nothing"), patchLabels);
+
         patchSelection.setLayoutParams(layoutParams);
         persistance.addView(patchSelection);
 
@@ -668,13 +677,17 @@ public class KosmischeActivity extends Activity {
         final MomentaryButton patchLoad = new MomentaryButton(this, 1236, false);
         patchLoad.setLabelText("load");
         patchLoad.setLayoutParams(layoutParams);
-        patternLoad.setActionRunnable(new Runnable() {
+        patchLoad.setActionRunnable(new Runnable() {
                 public void run() {
                     try {
-                        patchPersister.setFileName("patch" + patchSelection.getSelectedValue());
-                        patchPersister.load();
-                        patch.loadFromJSON(patchPersister.getJSONObject());
-                        loadPatch();
+                        String filePath = "patch" + patchSelection.getSelectedValue();
+                        File file = new File(getFilesDir(), filePath);
+                        if(file.exists()) {
+                            patchPersister.setFileName(filePath);
+                            patchPersister.load();
+                            patch.loadFromJSON(patchPersister.getJSONObject());
+                            loadPatch();
+                        }
                         patchLoad.setSelected(false);
                         patchLoad.invalidate();
                     }
@@ -694,12 +707,13 @@ public class KosmischeActivity extends Activity {
         final MomentaryButton patchSave = new MomentaryButton(this, 1237, false);
         patchSave.setLabelText("save");
         patchSave.setLayoutParams(layoutParams);
-        patternSave.setActionRunnable(new Runnable() {
+        patchSave.setActionRunnable(new Runnable() {
                 public void run() {
                     try {
                         String fileName = "patch" + patchSelection.getSelectedValue();
                         patchPersister.setJSONObject(patch.asJSONObject(fileName));
                         patchPersister.setFileName(fileName);
+                        Log.d("Kosmische", patchPersister.getJSONString());
                         patchPersister.persist();
                         patchSave.setSelected(false);
                         patchSave.invalidate();
@@ -811,7 +825,7 @@ public class KosmischeActivity extends Activity {
                         }
                     }
                     Thread.sleep((long) (60000 / bpm / 2.0));
-                    sendControlMessage("trigger", 0);
+                    sendControlMessage("trigger", 0, 0);
                     Thread.sleep((long) (60000 / bpm / 2.0 - 1));
                     
                     if(sequenceReversed) {
@@ -831,8 +845,8 @@ public class KosmischeActivity extends Activity {
 
                     // get the note out of the sequence
                     if(stepButtons.get(currentStep).isSelected()) {
-                        sendControlMessage("note", sequence.getNote(currentStep).getMidiNumber());
-                        sendControlMessage("trigger", 1);
+                        sendControlMessage("note", sequence.getNote(currentStep).getMidiNumber(), 0);
+                        sendControlMessage("trigger", 1, 0);
                     }
                 }
             } catch (InterruptedException e) {

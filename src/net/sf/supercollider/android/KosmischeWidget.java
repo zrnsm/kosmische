@@ -107,11 +107,8 @@ public abstract class KosmischeWidget extends View {
     }
 
     public void setPosition(float position) {
-        Log.d("Kosmische", "setting position widget");
         this.position = position;
-        if(activity != null) {
-            activity.sendControlMessage(getId(), getValue());
-        }
+        activity.sendControlMessage(getId(), getValue(), getPosition());
         invalidate();
     }
 
