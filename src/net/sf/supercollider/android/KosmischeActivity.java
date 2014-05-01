@@ -101,6 +101,7 @@ public class KosmischeActivity extends Activity {
             try {
                 superCollider.start();
                 superCollider.sendMessage(OscMessage.createSynthMessage("Kosmische", defaultNodeId, 0, 1));
+                loadPatch();
             } catch (RemoteException re) {
                 Log.d("Kosmische", re.toString());
             }
@@ -392,7 +393,7 @@ public class KosmischeActivity extends Activity {
 
         final Slider lfo1_depth = new Slider(this, registerWidget("lfo1_depth"), Slider.HORIZONTAL);
         lfo1_depth.setLabelText("depth");
-        lfo1_depth.setRange(0, 200);
+        lfo1_depth.setRange(0, 20);
         lfo1_depth.setLayoutParams(layoutParams);
         lfo1_freq_depth.addView(lfo1_depth);
         widgets.add(lfo1_depth);
@@ -412,11 +413,11 @@ public class KosmischeActivity extends Activity {
                                                             });
 
         final float[][] lfoDepthRanges = {
-            {0,10},
+            {0,20},
             {0,1},
-            {0,10},
+            {0,20},
             {0,1},
-            {0,2},
+            {0,1},
             {0,10},
             {0,10000},
             {0,3},
@@ -460,7 +461,7 @@ public class KosmischeActivity extends Activity {
 
         final Slider lfo2_depth = new Slider(this, registerWidget("lfo2_depth"), Slider.HORIZONTAL);
         lfo2_depth.setLabelText("depth");
-        lfo2_depth.setRange(0, 200);
+        lfo2_depth.setRange(0, 20);
         lfo2_depth.setLayoutParams(layoutParams);
         lfo2_freq_depth.addView(lfo2_depth);
         widgets.add(lfo2_depth);
@@ -536,14 +537,19 @@ public class KosmischeActivity extends Activity {
         row2.addView(filter_adsr);
         lLayout.addView(row2);
 
+        LinearLayout stepsContainer = new LinearLayout(this);
+        stepsContainer.setOrientation(LinearLayout.VERTICAL);
+        stepsContainer.setLayoutParams(layoutParams);
+
         LinearLayout steps = new LinearLayout(this);
         steps.setOrientation(LinearLayout.HORIZONTAL);
         steps.setLayoutParams(layoutParams);
         steps.setBackgroundColor(Color.BLACK);
 
         createStepButtons(steps);
-        
-        lLayout.addView(steps);
+
+        stepsContainer.addView(steps);
+        lLayout.addView(stepsContainer);
 
         LinearLayout aux = new LinearLayout(this);
         aux.setOrientation(LinearLayout.HORIZONTAL);
@@ -553,8 +559,12 @@ public class KosmischeActivity extends Activity {
         sequenceControl.setOrientation(LinearLayout.HORIZONTAL);
         sequenceControl.setLayoutParams(layoutParams);
 
+        LinearLayout playReverseTempo = new LinearLayout(this);
+        playReverseTempo.setOrientation(LinearLayout.VERTICAL);
+        playReverseTempo.setLayoutParams(layoutParams);
+
         LinearLayout playReverse = new LinearLayout(this);
-        playReverse.setOrientation(LinearLayout.VERTICAL);
+        playReverse.setOrientation(LinearLayout.HORIZONTAL);
         playReverse.setLayoutParams(layoutParams);
 
         PlayButton playButton = new PlayButton(this, 1000);
@@ -566,21 +576,65 @@ public class KosmischeActivity extends Activity {
         reverseButton.setLabelText("reverse");
         reverseButton.setLayoutParams(layoutParams);
         playReverse.addView(reverseButton);
+        
+        playReverseTempo.addView(playReverse);
 
-        sequenceControl.addView(playReverse);
-
-        TempoSlider tempoSlider = new TempoSlider(this, 1002, Slider.VERTICAL);
+        TempoSlider tempoSlider = new TempoSlider(this, 1002, Slider.HORIZONTAL);
         tempoSlider.setLabelText("tempo");
         tempoSlider.setRange(1, 500);
         tempoSlider.setPosition(0.24f);
         tempoSlider.setLayoutParams(layoutParams);
-        sequenceControl.addView(tempoSlider);
+        playReverseTempo.addView(tempoSlider);
+
+        sequenceControl.addView(playReverseTempo);
+
+        LinearLayout randomControl = new LinearLayout(this);
+        randomControl.setOrientation(LinearLayout.VERTICAL);
+        randomControl.setLayoutParams(layoutParams);
+
+        // LinearLayout randomScale = new LinearLayout(this);
+        // randomScale.setOrientation(LinearLayout.VERTICAL);
+        // randomScale.setLayoutParams(layoutParams);
+        // randomControl.addView(randomScale);
+
+        // final ScrollBox scale = new ScrollBox(this, registerWidget("do_nothing"), new String[] {"m penta"});
+        // scale.setLayoutParams(layoutParams);
+
+        // final MomentaryButton randomSequence = new MomentaryButton(this, 1008, true);
+        // randomSequence.setLabelText("rand pattern");
+        // randomSequence.setLayoutParams(layoutParams);
+        // randomSequence.setActionRunnable(new Runnable() {
+        //         public void run() {
+        //             //                    patch.setToRandom();
+        //             //                    loadPatch();
+        //             randomSequence.setSelected(false);
+        //             randomSequence.invalidate();
+        //         }
+        //     });
+
+        // randomScale.addView(scale);
+        // randomScale.addView(randomSequence);
+        // randomControl.addView(randomScale);
+
+        // final MomentaryButton randomPatch = new MomentaryButton(this, 1008, true);
+        // randomPatch.setLabelText("rand patch");
+        // randomPatch.setLayoutParams(layoutParams);
+        // randomPatch.setActionRunnable(new Runnable() {
+        //         public void run() {
+        //             patch.setToRandom();
+        //             loadPatch();
+        //             randomPatch.setSelected(false);
+        //             randomPatch.invalidate();
+        //         }
+        //     });
+
+        randomControl.addView(randomPatch);
+
+        sequenceControl.addView(randomControl);
 
         LinearLayout persistance = new LinearLayout(this);
         persistance.setOrientation(LinearLayout.VERTICAL);
         persistance.setLayoutParams(layoutParams);
-
-
 
         String[] patternLabels = new String[PATCH_MEMORY_LOCATIONS];
         for(int i = 0; i < patternLabels.length; i++) {
@@ -596,7 +650,7 @@ public class KosmischeActivity extends Activity {
         patternPersistance.setOrientation(LinearLayout.HORIZONTAL);
         patternPersistance.setLayoutParams(layoutParams);
 
-        final MomentaryButton patternLoad = new MomentaryButton(this, 1234, false);
+        final MomentaryButton patternLoad = new MomentaryButton(this, 1003, false);
         patternLoad.setLabelText("load");
         patternLoad.setLayoutParams(layoutParams);
         patternPersistance.addView(patternLoad);
@@ -632,7 +686,7 @@ public class KosmischeActivity extends Activity {
                 }
             });
 
-        final MomentaryButton patternSave = new MomentaryButton(this, 1235, false);
+        final MomentaryButton patternSave = new MomentaryButton(this, 1004, false);
         patternSave.setLabelText("save");
         patternSave.setLayoutParams(layoutParams);
         patternSave.setActionRunnable(new Runnable() {
@@ -640,7 +694,6 @@ public class KosmischeActivity extends Activity {
                     try {
                         String fileName = "pattern" + patternSelection.getSelectedValue();
                         sequencePersister.setJSONObject(sequence.asJSONObject(fileName));
-                        Log.d("Kosmische", sequencePersister.getJSONString());           
                         sequencePersister.setFileName(fileName);
                         sequencePersister.persist();
                         patternSave.setSelected(false);
@@ -673,7 +726,7 @@ public class KosmischeActivity extends Activity {
         patchPersistance.setOrientation(LinearLayout.HORIZONTAL);
         patchPersistance.setLayoutParams(layoutParams);
 
-        final MomentaryButton patchLoad = new MomentaryButton(this, 1236, false);
+        final MomentaryButton patchLoad = new MomentaryButton(this, 1005, false);
         patchLoad.setLabelText("load");
         patchLoad.setLayoutParams(layoutParams);
         patchLoad.setActionRunnable(new Runnable() {
@@ -703,7 +756,7 @@ public class KosmischeActivity extends Activity {
             });
         patchPersistance.addView(patchLoad);
 
-        final MomentaryButton patchSave = new MomentaryButton(this, 1237, false);
+        final MomentaryButton patchSave = new MomentaryButton(this, 1006, false);
         patchSave.setLabelText("save");
         patchSave.setLayoutParams(layoutParams);
         patchSave.setActionRunnable(new Runnable() {
@@ -712,7 +765,6 @@ public class KosmischeActivity extends Activity {
                         String fileName = "patch" + patchSelection.getSelectedValue();
                         patchPersister.setJSONObject(patch.asJSONObject(fileName));
                         patchPersister.setFileName(fileName);
-                        Log.d("Kosmische", patchPersister.getJSONString());
                         patchPersister.persist();
                         patchSave.setSelected(false);
                         patchSave.invalidate();
@@ -785,8 +837,6 @@ public class KosmischeActivity extends Activity {
         setContentView(lLayout);
 
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
-
-        loadPatch();
     }
 
     public Sequence getSequence() {
@@ -905,13 +955,5 @@ public class KosmischeActivity extends Activity {
             e.printStackTrace();
         }
         unbindService(conn);
-    }
-
-    /**
-     * Convert midi notes to floating point pitches - based on sc_midicps in the SC C++ code
-     */
-    float sc_midicps(float note)
-    {
-        return (float) (440.0 * Math.pow((float)2., (note - 69.0) * (float)0.083333333333));
     }
 }

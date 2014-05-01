@@ -24,8 +24,6 @@ public class ChoiceButtonGroup extends KosmischeWidget {
 
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    Log.d("Kosmische", event.toString());
-                    
                     float x = event.getX();
                     float y = event.getY();
                     float centerX = ChoiceButtonGroup.this.centerX;
@@ -86,7 +84,6 @@ public class ChoiceButtonGroup extends KosmischeWidget {
     }
 
     protected void onSizeChanged (int w, int h, int oldw, int oldh) {
-        Log.d("Kosmische", this.labelText + " " + getLeft() + " " + getTop() + " " + (getLeft() + w) + " " + (getTop() + h));
         this.width = w;
         this.height = h;
         this.centerX = w / 2;
@@ -129,7 +126,6 @@ public class ChoiceButtonGroup extends KosmischeWidget {
     }
 
     protected void onDraw(Canvas canvas) {
-        Log.d("Kosmische", "drawing choice group");
         drawBackground(canvas);
         drawOutline(canvas);
         drawDividers(canvas);

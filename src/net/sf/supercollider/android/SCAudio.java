@@ -105,7 +105,7 @@ public class SCAudio extends Thread {
 	public void sendQuit(){
 		sendMessage(OscMessage.quitMessage());
 		running = false;
-		closeUDP(); // sent early
+                closeUDP(); // sent early
 	}
 	
 	/**
@@ -202,8 +202,8 @@ public class SCAudio extends Thread {
 		// - this means /quit has been sent to the scsynth code, 
 		// so we wait for [/done, /quit] which tells us quit has nicely completed. 
 		OscMessage msgFromServer=null;
-		int triesToFail = 8; // should be plenty, it should only take 2 cycles (I think) max
-		for(int i=0; i<triesToFail; ++i){
+		int triesToFail = 32; // should be plenty, it should only take 2 cycles (I think) max
+		for(int i=0; i < triesToFail; ++i){
 			while((!ended) && SCAudio.hasMessages()){
 				msgFromServer = SCAudio.getMessage();
 				if (msgFromServer != null) {
@@ -217,7 +217,7 @@ public class SCAudio extends Thread {
 				}
 			}
 			// now invoke sc audio loop, though we're not reading/writing the actual audio
-			if(!ended) ndkReturnVal = scsynth_android_genaudio(audioBuf);
+                        //			if(!ended) ndkReturnVal = scsynth_android_genaudio(audioBuf);
 		}
     	
     	if(!ended){

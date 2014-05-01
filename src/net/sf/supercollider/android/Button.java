@@ -26,13 +26,11 @@ public class Button extends KosmischeWidget {
 
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    Log.d("Kosmische", event.toString());
                     Rect hitRect = new Rect();
                     Button.this.getHitRect(hitRect);
                     
                     if ((event.getAction() == MotionEvent.ACTION_UP) || (event.getAction() == MotionEvent.ACTION_POINTER_UP) 
                         && hitRect.contains((int) event.getX(), (int) event.getY())) {
-                        Log.d("Kosmische", event.toString());
                         isSelected = !isSelected;
                         invalidate();
                     }

@@ -28,13 +28,11 @@ public class MomentaryButton extends Button {
 
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    Log.d("Kosmische", event.toString());
                     Rect hitRect = new Rect();
                     MomentaryButton.this.getHitRect(hitRect);
 
                     if (event.getAction() == MotionEvent.ACTION_DOWN) {
                         isSelected = true;
-                        Log.d("Kosmische", "selected");
                         invalidate();
                         action.run();
                     }

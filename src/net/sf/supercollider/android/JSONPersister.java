@@ -52,7 +52,6 @@ public class JSONPersister {
     public void load() throws FileNotFoundException, IOException, JSONException {
         FileInputStream fis = context.openFileInput(fileName);
         StringBuffer fileContent = new StringBuffer("");
-        Log.d("Kosmische", "available " + (Integer) fis.available());
         byte[] buffer = new byte[1024];
         int n;
 
@@ -60,8 +59,6 @@ public class JSONPersister {
         { 
             fileContent.append(new String(buffer, 0, n)); 
         }
-
-        Log.d("Kosmische", fileContent.toString());
 
         this.json = new JSONObject(fileContent.toString());
     }

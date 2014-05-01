@@ -26,8 +26,6 @@ public class Slider extends KosmischeWidget {
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
                     if ((event.getAction() == MotionEvent.ACTION_DOWN) || (event.getAction() == MotionEvent.ACTION_MOVE)) {
-                        Log.d("Kosmische", ((Float) v_position).toString());
-                        Log.d("Kosmische", ((Float) h_position).toString());
                         h_position = Math.max(0, Math.min(1, event.getX() / width));
                         v_position = Math.max(0, Math.min(1, (height - event.getY()) / height));
                         invalidate();
@@ -58,7 +56,6 @@ public class Slider extends KosmischeWidget {
     }
 
     protected void drawFill(Canvas canvas) {
-        Log.d("Kosmische", "orientation " + orientation);
         if(orientation == HORIZONTAL) {
             canvas.drawRect(0, 0, width * h_position, height - 1, fill);
         }

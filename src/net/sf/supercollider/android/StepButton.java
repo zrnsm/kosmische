@@ -32,7 +32,6 @@ public class StepButton extends Button {
                     
                     if ((event.getAction() == MotionEvent.ACTION_UP) || (event.getAction() == MotionEvent.ACTION_POINTER_UP) 
                         && hitRect.contains((int) event.getX(), (int) event.getY())) {
-                        Log.d("Kosmische", event.toString());
                         if(!noteChangeInProgress) {
                             isSelected = !isSelected;
                             activity.getSequence().setEnabled(step, isSelected);

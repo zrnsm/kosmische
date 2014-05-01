@@ -108,7 +108,7 @@ public abstract class KosmischeWidget extends View {
 
     public void setPosition(float position) {
         this.position = position;
-        activity.sendControlMessage(getId(), getValue(), getPosition());
+        activity.sendControlMessage(getId(), getValue(), position);
         invalidate();
     }
 
@@ -144,7 +144,6 @@ public abstract class KosmischeWidget extends View {
     }
 
     protected void onSizeChanged (int w, int h, int oldw, int oldh) {
-        Log.d("Kosmische", this.labelText + " " + getLeft() + " " + getTop() + " " + (getLeft() + w) + " " + (getTop() + h));
         this.width = w;
         this.height = h;
         this.centerX = w / 2;

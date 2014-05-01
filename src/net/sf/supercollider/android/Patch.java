@@ -68,7 +68,7 @@ public class Patch {
             patchValues.put("delaytime", 0.5f);
             patchValues.put("decaytime", 0.5f);
             patchValues.put("reverb_mix", 0f);
-            patchValues.put("delay_mix", -1f);
+            patchValues.put("delay_mix", 0f);
             patchValues.put("reverb_room_size", 0.5f);
             patchValues.put("reverb_damp", 0.5f);
         }

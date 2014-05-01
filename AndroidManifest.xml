@@ -6,6 +6,7 @@
 	<uses-permission android:name="android.permission.INTERNET" />
     <application android:debuggable="true"
                  android:label="@string/app_name"
+                 android:vmSafeMode="true"
                  android:icon="@drawable/icon">
     	<activity android:name=".KosmischeActivity" android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
@@ -21,3 +22,14 @@
     </application>
     <uses-sdk android:minSdkVersion="4" />
 </manifest> 
+
+
+<!-- <application         -->
+<!--         android:icon="@drawable/ic_launcher" -->
+<!--         android:label="@string/app_name" -->
+<!--         android:theme="@style/CustomTheme" -->
+<!--         android:allowBackup="true" -->
+<!--         android:debuggable="true" -->
+<!--         android:vmSafeMode="true"        -->
+<!--         android:allowClearUserData="true" -->
+<!--         android:hardwareAccelerated="true" > -->

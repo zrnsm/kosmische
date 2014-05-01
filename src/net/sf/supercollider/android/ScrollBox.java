@@ -62,7 +62,6 @@ public class ScrollBox extends KosmischeWidget {
     }
 
     public void setPosition(float i) {
-        Log.d("Kosmische", "setting position scroll");
         setSelectedValue((int) i);
     }
 
