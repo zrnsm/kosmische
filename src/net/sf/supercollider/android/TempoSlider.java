@@ -22,10 +22,15 @@ public class TempoSlider extends Slider {
                         h_position = event.getX() / width;
                         v_position = (height - event.getY()) / height;
                         invalidate();
-                        ((KosmischeActivity) TempoSlider.this.getContext()).setBPM(getValue());
+                        activity.setBPM(getValue());
                     }
                     return true;
                 }
             });
+    }
+
+    public void setPosition(float position) {
+        this.h_position = position;
+        this.v_position = position;
     }
 }

@@ -1,9 +1,10 @@
+- random sequence generation from scales
+- random patch generation
+
 - build instructions
 - widget id uniqueness
 - show bpm on tempo slider
 - delay time modulation crashes audio engine (range issue?)
-- random sequence generation from scales
-- random patch generation
 - load a reasonable default patch
 - fix 'has stopped' issue
 - alternative filter types

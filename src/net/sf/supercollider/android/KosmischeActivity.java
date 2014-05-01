@@ -76,9 +76,7 @@ public class KosmischeActivity extends Activity {
                 "/n_set", defaultNodeId, parameterName, value
             });
         try {
-            if(superCollider != null) {
-                superCollider.sendMessage(controlMessage);
-            }
+            superCollider.sendMessage(controlMessage);
         } catch (RemoteException e) {
             Toast.makeText(
                            KosmischeActivity.this, 
@@ -574,6 +572,7 @@ public class KosmischeActivity extends Activity {
         TempoSlider tempoSlider = new TempoSlider(this, 1002, Slider.VERTICAL);
         tempoSlider.setLabelText("tempo");
         tempoSlider.setRange(1, 500);
+        tempoSlider.setPosition(0.24f);
         tempoSlider.setLayoutParams(layoutParams);
         sequenceControl.addView(tempoSlider);
 
@@ -818,6 +817,7 @@ public class KosmischeActivity extends Activity {
                 while(true) {
                     synchronized (mPauseLock) {
                         while (mPaused) {
+                            sendControlMessage("trigger", 0, 0);
                             try {
                                 mPauseLock.wait();
                             } catch (InterruptedException e) {
