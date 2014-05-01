@@ -183,8 +183,6 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.setOrientation(LinearLayout.HORIZONTAL);
         osc1_section_top.setLayoutParams(layoutParams);
 
-        Log.d("Kosmische", "here3");
-
         ChoiceButtonGroup osc1_type = new ChoiceButtonGroup(this, 
                                                             registerWidget("osc1_type"),
                                                             new String[] {"Saw", "Pulse", "Sin", "Noise"});
@@ -200,8 +198,6 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.addView(osc1_tune);
         widgets.add(osc1_tune);
         
-        Log.d("Kosmische", "here5");
-
         LinearLayout osc1_section_bottom = new LinearLayout(this);
         osc1_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
         osc1_section_bottom.setLayoutParams(layoutParams);
@@ -212,8 +208,6 @@ public class KosmischeActivity extends Activity {
         osc1_width.setLayoutParams(layoutParams);
         osc1_section_bottom.addView(osc1_width);
         widgets.add(osc1_width);
-
-        Log.d("Kosmische", "here4");
 
         Slider osc1_detune = new Slider(this, registerWidget("osc1_detune"), Slider.HORIZONTAL);
         osc1_detune.setLabelText("detune");
@@ -268,8 +262,6 @@ public class KosmischeActivity extends Activity {
 
         row1.addView(filter_section);
 
-        Log.d("Kosmische", "here2");
-
         LinearLayout amp_adsr = new LinearLayout(this);
         amp_adsr.setOrientation(LinearLayout.HORIZONTAL);
         amp_adsr.setLayoutParams(layoutParams);
@@ -303,8 +295,6 @@ public class KosmischeActivity extends Activity {
         widgets.add(amp_release);
 
         row1.addView(amp_adsr);
-
-        Log.d("Kosmische", "here17");
 
         lLayout.addView(row1);
 
@@ -351,8 +341,6 @@ public class KosmischeActivity extends Activity {
         osc2_width.setLayoutParams(layoutParams);
         osc2_section_bottom.addView(osc2_width);
         widgets.add(osc2_width);
-
-        Log.d("Kosmische", "here18");
 
         Slider osc2_detune = new Slider(this, registerWidget("osc2_detune"), Slider.HORIZONTAL);
         osc2_detune.setLabelText("detune");
@@ -434,8 +422,6 @@ public class KosmischeActivity extends Activity {
             {0,3},
         };
 
-        Log.d("Kosmische", "here19");
-
         lfo1_target.setOnChangeRunnable(new Runnable() {
                 public void run() {
                     float[] range = lfoDepthRanges[lfo1_target.getSelectedValue()];
@@ -508,8 +494,6 @@ public class KosmischeActivity extends Activity {
 
         row2.addView(lfo_section);
 
-        Log.d("Kosmische", "here20");
-
         LinearLayout filter_adsr = new LinearLayout(this);
         filter_adsr.setOrientation(LinearLayout.HORIZONTAL);
         filter_adsr.setLayoutParams(layoutParams);
@@ -561,8 +545,6 @@ public class KosmischeActivity extends Activity {
         
         lLayout.addView(steps);
 
-        Log.d("Kosmische", "here21");
-
         LinearLayout aux = new LinearLayout(this);
         aux.setOrientation(LinearLayout.HORIZONTAL);
         aux.setLayoutParams(layoutParams);
@@ -612,8 +594,6 @@ public class KosmischeActivity extends Activity {
         LinearLayout patternPersistance = new LinearLayout(this);
         patternPersistance.setOrientation(LinearLayout.HORIZONTAL);
         patternPersistance.setLayoutParams(layoutParams);
-
-        Log.d("Kosmische", "here22");
 
         final MomentaryButton patternLoad = new MomentaryButton(this, 1234, false);
         patternLoad.setLabelText("load");
@@ -711,8 +691,6 @@ public class KosmischeActivity extends Activity {
             });
         patchPersistance.addView(patchLoad);
 
-        Log.d("Kosmische", "here23");
-
         final MomentaryButton patchSave = new MomentaryButton(this, 1237, false);
         patchSave.setLabelText("save");
         patchSave.setLayoutParams(layoutParams);
@@ -788,8 +766,6 @@ public class KosmischeActivity extends Activity {
         effects.addView(reverbDamp);
         widgets.add(reverbDamp);
 
-        Log.d("Kosmische", "here24");
-
         aux.addView(effects);
 
         lLayout.addView(aux);
@@ -798,7 +774,6 @@ public class KosmischeActivity extends Activity {
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
 
         loadPatch();
-        Log.d("Kosmische", "here25");
     }
 
     public Sequence getSequence() {
@@ -854,29 +829,6 @@ public class KosmischeActivity extends Activity {
                         currentStep = 0;
                     }
 
-                    // TODO: move step indicator update into another thread
-                    // int previousStep = (currentStep - 1) % sequence.getLength();
-                    // if(currentStep == 0) {
-                    //     previousStep = sequence.getLength() - 1;
-                    // }
-
-                    // Log.d("Kosmische", "previousStep " + previousStep);
-                    // // restore preious step color
-                    // StepButton previousStepButton = stepButtons.get(previousStep);
-                    // if(previousFill != null) {
-                    //     Log.d("Kosmische", "altering previousStep");
-                    //     previousStepButton.setFill(previousFill);
-                    //     previousStepButton.setIsCurrentStep(false);
-                    //     previousStepButton.invalidate();
-                    // }
-
-                    // // set the current step active
-                    // StepButton currentStepButton = stepButtons.get(currentStep);
-                    // previousFill = currentStepButton.getFill();
-                    // currentStepButton.setFill(activeFill);
-                    // currentStepButton.setIsCurrentStep(true);
-                    // currentStepButton.invalidate();
-
                     // get the note out of the sequence
                     if(stepButtons.get(currentStep).isSelected()) {
                         sendControlMessage("note", sequence.getNote(currentStep).getMidiNumber());
@@ -896,53 +848,6 @@ public class KosmischeActivity extends Activity {
     public Thread getTimerThread() {
         return timerThread;
     }
-
-    // private Runnable timerRunnable = new Runnable() {
-    //     @Override
-    //     public void run() {
-    //         currentStep++;
-
-    //         if(currentStep >= sequence.getLength()) {
-    //             currentStep = 0;
-    //         }
-
-    //         int previousStep = (currentStep - 1) % sequence.getLength();
-    //         if(currentStep == 0) {
-    //             previousStep = sequence.getLength() - 1;
-    //         }
-
-    //         // Log.d("Kosmische", "previousStep " + previousStep);
-    //         // // restore preious step color
-    //         // StepButton previousStepButton = stepButtons.get(previousStep);
-    //         // if(previousFill != null) {
-    //         //     Log.d("Kosmische", "altering previousStep");
-    //         //     previousStepButton.setFill(previousFill);
-    //         //     previousStepButton.setIsCurrentStep(false);
-    //         //     previousStepButton.invalidate();
-    //         // }
-
-    //         // // set the current step active
-    //         // StepButton currentStepButton = stepButtons.get(currentStep);
-    //         // previousFill = currentStepButton.getFill();
-    //         // currentStepButton.setFill(activeFill);
-    //         // currentStepButton.setIsCurrentStep(true);
-    //         // currentStepButton.invalidate();
-
-    //         // get the note out of the sequence
-    //         if(stepButtons.get(currentStep).isSelected()) {
-    //             sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
-    //             sendControlMessage("trigger", 1);
-    //             try {
-    //                 Thread.sleep((int) (60000 / bpm / 4.0 / 4.0));
-    //             }
-    //             catch(InterruptedException e) {
-    //                 e.printStackTrace();
-    //             }
-    //             sendControlMessage("trigger", 0);
-    //         }
-    //         handler.postDelayed(this, (int) (60000 / bpm / 4.0));
-    //     }
-    // };
 
     public void setBPM(float bpm) {
         this.bpm = bpm;

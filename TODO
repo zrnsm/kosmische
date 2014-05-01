@@ -1,3 +1,4 @@
+- build instructions
 - widget id uniqueness
 - show bpm on tempo slider
 - delay time modulation crashes audio engine (range issue?)
