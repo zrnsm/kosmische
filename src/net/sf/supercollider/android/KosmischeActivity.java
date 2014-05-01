@@ -35,6 +35,10 @@ import java.util.ArrayList;
 import java.lang.Thread;
 import java.lang.InterruptedException;
 import android.graphics.Color;
+import java.io.FileNotFoundException;
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.io.IOException;
 
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
@@ -42,50 +46,21 @@ public class KosmischeActivity extends Activity {
     private KKnob mainWidget = null;
     private int defaultNodeId = 999;
     private HashMap<Integer, String> parameterMap;
+    private ArrayList<KosmischeWidget> widgets;
     private float bpm = 120.0f;
     private int currentStep = -1;
     private boolean sequenceReversed = false;
     private TimerRunnable timerRunnable = new TimerRunnable();
     private Thread timerThread = new Thread(timerRunnable);
-
+    private JSONPersister sequencePersister;
+    private JSONPersister patchPersister;
     private Sequence sequence;
+    private Patch patch;
     private ArrayList<StepButton> stepButtons;
     private final int sequenceLength = 16;
-
     private Paint activeFill;
     private Paint previousFill;
-
     private int nextWidgetId = 0;
-
-    // Kosmische parameters
-    //     osc1_level = 0.5, 
-    //     osc1_type = 0, 
-    //     osc1_detune = 0, 
-    //     osc1_width = 0.5, 
-    //     osc1_octave = 0,
-    //     osc1_tune = 0,
-    //     osc2_level = 0.5, 
-    //     osc2_type = 0, 
-    //     osc2_detune = 0, 
-    //     osc2_width = 0.5, 
-    //     osc2_octave = 0,
-    //     osc2_tune = 0,
-    //     amp_attack = 0.001,
-    //     amp_decay = 0.5,
-    //     amp_sustain = 0.1,
-    //     amp_release = 0.1,
-    //     cutoff = 5000,
-    //     resonance = 1,
-    //     filter_attack = 0.001,
-    //     filter_decay = 0.5,
-    //     filter_sustain = 0.1,
-    //     filter_release = 0.1,
-    //     filter_env_amount = -1,
-    //     delaytime = 0.5,
-    //     decaytime = 1.0,
-    //     reverb_mix = 0.5,
-    //     reverb_room_size = 0.5,
-    //     reverb_damp = 0.5
 
     private int registerWidget(String parameter) {
         int id = nextWidgetId;
@@ -99,7 +74,9 @@ public class KosmischeActivity extends Activity {
                 "/n_set", defaultNodeId, parameterName, value
             });
         try {
-            superCollider.sendMessage(controlMessage);
+            if(superCollider != null) {
+                superCollider.sendMessage(controlMessage);
+            }
         } catch (RemoteException e) {
             Toast.makeText(
                            KosmischeActivity.this, 
@@ -119,16 +96,10 @@ public class KosmischeActivity extends Activity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             KosmischeActivity.this.superCollider = (ISuperCollider.Stub) service;
             try {
-                // Kick off the supercollider playback routine
                 superCollider.start();
-                // Start a synth playing
-                //                log("starting synth");
                 superCollider.sendMessage(OscMessage.createSynthMessage("Kosmische", defaultNodeId, 0, 1));
-                //                setUpControls(); // now we have an audio engine, let the activity hook up its controls
             } catch (RemoteException re) {
-
-                //log(re.toString());
-                re.printStackTrace();
+                Log.d("Kosmische", re.toString());
             }
         }
         //@Override
@@ -137,11 +108,31 @@ public class KosmischeActivity extends Activity {
         }
     }
 
+    private void loadPatch() {
+ 
+        try {
+            JSONObject values = patch.getPatchValues();
+            for(KosmischeWidget widget : widgets) {
+                String param = parameterMap.get(widget.getId());
+                Log.d("Kosmische", param);
+                //Log.d("Kosmische", ((Integer) widget.getId()).toString());
+                //Log.d("Kosmsiche", "what the fuck");
+                // Log.d("Kosmsiche", ((Boolean) (parameterMap == null)).toString());
+                Log.d("Kosmische", values.toString());
+                // Log.d("Kosmsiche", parameterMap.get(widget.getId()));
+                Log.d("Kosmische", values.get(param).toString());
+                widget.setPosition(((Double) values.get(param)).floatValue());
+            }
+        }
+        catch(JSONException e) {
+            Log.d("Kosmische", "failed to load patch " + e);
+        }
+    }
+
     private void createStepButtons(LinearLayout steps) {
         for(int i = 0; i < sequenceLength; i++) {
             StepButton button = new StepButton(this, i);
-            button.setLabelText(sequence.get(i).getMidiNumber().toString());
-            button.setFillRGB(200, 200, 200);
+            button.setLabelText(sequence.getNote(i).getMidiNumber().toString());
             button.setSelected(true);
             button.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1));
             stepButtons.add(button);
@@ -159,6 +150,11 @@ public class KosmischeActivity extends Activity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         sequence = new Sequence(16);
+        patch = new Patch();
+        widgets = new ArrayList<KosmischeWidget>();
+
+        sequencePersister = new JSONPersister(this, "pattern1");
+        patchPersister = new JSONPersister(this, "patch1");
         stepButtons = new ArrayList<StepButton>(sequenceLength);
         activeFill = new Paint();
         activeFill.setARGB(255, 255, 0, 0);
@@ -187,20 +183,24 @@ public class KosmischeActivity extends Activity {
         osc1_section_top.setOrientation(LinearLayout.HORIZONTAL);
         osc1_section_top.setLayoutParams(layoutParams);
 
+        Log.d("Kosmische", "here3");
+
         ChoiceButtonGroup osc1_type = new ChoiceButtonGroup(this, 
                                                             registerWidget("osc1_type"),
                                                             new String[] {"Saw", "Pulse", "Sin", "Noise"});
         osc1_type.setLayoutParams(layoutParams);
-        osc1_type.setFillRGB(190,190,190);
         osc1_section_top.addView(osc1_type);
+        widgets.add(osc1_type);
 
         Slider osc1_tune = new Slider(this, registerWidget("osc1_tune"), Slider.HORIZONTAL);
         osc1_tune.setLabelText("coarse tune");
         osc1_tune.setRange(-12, 12);
         osc1_tune.setIntegerValued(true);
         osc1_tune.setLayoutParams(layoutParams);
-        osc1_tune.setFillRGB(190,190,190);
         osc1_section_top.addView(osc1_tune);
+        widgets.add(osc1_tune);
+        
+        Log.d("Kosmische", "here5");
 
         LinearLayout osc1_section_bottom = new LinearLayout(this);
         osc1_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
@@ -210,16 +210,17 @@ public class KosmischeActivity extends Activity {
         osc1_width.setLabelText("pulsewidth");
         osc1_width.setRange(0, 1);
         osc1_width.setLayoutParams(layoutParams);
-        osc1_width.setFillRGB(190,190,190);
-        //        registerWidget(osc1_width.getId(), "osc1_width");
         osc1_section_bottom.addView(osc1_width);
+        widgets.add(osc1_width);
+
+        Log.d("Kosmische", "here4");
 
         Slider osc1_detune = new Slider(this, registerWidget("osc1_detune"), Slider.HORIZONTAL);
         osc1_detune.setLabelText("detune");
         osc1_detune.setRange(-20, 20);
         osc1_detune.setLayoutParams(layoutParams);
-        osc1_detune.setFillRGB(190,190,190);
         osc1_section_bottom.addView(osc1_detune);
+        widgets.add(osc1_detune);
 
         osc1_section.addView(osc1_section_top);
         osc1_section.addView(osc1_section_bottom);
@@ -228,7 +229,7 @@ public class KosmischeActivity extends Activity {
         osc1_level.setLabelText("level");
         osc1_level.setRange(1, 10);
         osc1_level.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 4f));
-        osc1_level.setFillRGB(190,190,190);
+        widgets.add(osc1_level);
 
         osc1_container.addView(osc1_section);
         osc1_container.addView(osc1_level);
@@ -247,8 +248,8 @@ public class KosmischeActivity extends Activity {
         cutoff_knob.setLabelText("cutoff");
         cutoff_knob.setRange(0, 10000);
         cutoff_knob.setLayoutParams(layoutParams);
-        cutoff_knob.setFillRGB(210,210,210);
         filter_section.addView(cutoff_knob);
+        widgets.add(cutoff_knob);
 
         FillerWidget w2 = new FillerWidget(this);
         w2.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 30f));
@@ -258,8 +259,8 @@ public class KosmischeActivity extends Activity {
         resonance_knob.setLabelText("reso");
         resonance_knob.setRange(0, 4);
         resonance_knob.setLayoutParams(layoutParams);
-        resonance_knob.setFillRGB(210,210,210);
         filter_section.addView(resonance_knob);
+        widgets.add(resonance_knob);
 
         FillerWidget w3 = new FillerWidget(this);
         w3.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 30f));
@@ -267,39 +268,43 @@ public class KosmischeActivity extends Activity {
 
         row1.addView(filter_section);
 
+        Log.d("Kosmische", "here2");
+
         LinearLayout amp_adsr = new LinearLayout(this);
         amp_adsr.setOrientation(LinearLayout.HORIZONTAL);
         amp_adsr.setLayoutParams(layoutParams);
 
-        Slider slider = new Slider(this, registerWidget("amp_attack"), Slider.VERTICAL);
-        slider.setLabelText("a");
-        slider.setRange(0, 1);
-        slider.setLayoutParams(layoutParams);
-        slider.setFillRGB(210,210,210);
-        amp_adsr.addView(slider);
+        Slider amp_attack = new Slider(this, registerWidget("amp_attack"), Slider.VERTICAL);
+        amp_attack.setLabelText("a");
+        amp_attack.setRange(0, 1);
+        amp_attack.setLayoutParams(layoutParams);
+        amp_adsr.addView(amp_attack);
+        widgets.add(amp_attack);
 
-        Slider slider2 = new Slider(this, registerWidget("amp_decay"), Slider.VERTICAL);
-        slider2.setLabelText("d");
-        slider2.setLayoutParams(layoutParams);
-        slider2.setFillRGB(210,210,210);
-        slider2.setRange(0, 1);
-        amp_adsr.addView(slider2);
+        Slider amp_decay = new Slider(this, registerWidget("amp_decay"), Slider.VERTICAL);
+        amp_decay.setLabelText("d");
+        amp_decay.setLayoutParams(layoutParams);
+        amp_decay.setRange(0, 1);
+        amp_adsr.addView(amp_decay);
+        widgets.add(amp_decay);
 
-        Slider slider3 = new Slider(this, registerWidget("amp_sustain"), Slider.VERTICAL);
-        slider3.setLabelText("s");
-        slider3.setLayoutParams(layoutParams);
-        slider3.setFillRGB(210,210,210);
-        slider3.setRange(0, 1);
-        amp_adsr.addView(slider3);
+        Slider amp_sustain = new Slider(this, registerWidget("amp_sustain"), Slider.VERTICAL);
+        amp_sustain.setLabelText("s");
+        amp_sustain.setLayoutParams(layoutParams);
+        amp_sustain.setRange(0, 1);
+        amp_adsr.addView(amp_sustain);
+        widgets.add(amp_sustain);
 
-        Slider slider4 = new Slider(this, registerWidget("amp_release"), Slider.VERTICAL);
-        slider4.setLabelText("r");
-        slider4.setLayoutParams(layoutParams);
-        slider4.setFillRGB(210,210,210);
-        slider4.setRange(0, 1);
-        amp_adsr.addView(slider4);
+        Slider amp_release = new Slider(this, registerWidget("amp_release"), Slider.VERTICAL);
+        amp_release.setLabelText("r");
+        amp_release.setLayoutParams(layoutParams);
+        amp_release.setRange(0, 1);
+        amp_adsr.addView(amp_release);
+        widgets.add(amp_release);
 
         row1.addView(amp_adsr);
+
+        Log.d("Kosmische", "here17");
 
         lLayout.addView(row1);
 
@@ -326,14 +331,15 @@ public class KosmischeActivity extends Activity {
         osc2_type.setLayoutParams(layoutParams);
         osc2_type.setFillRGB(190,190,190);
         osc2_section_top.addView(osc2_type);
+        widgets.add(osc2_type);
 
         Slider osc2_tune = new Slider(this, registerWidget("osc2_tune"), Slider.HORIZONTAL);
         osc2_tune.setLabelText("coarse tune");
         osc2_tune.setRange(-12, 12);
         osc2_tune.setIntegerValued(true);
         osc2_tune.setLayoutParams(layoutParams);
-        osc2_tune.setFillRGB(150,150,150);
         osc2_section_top.addView(osc2_tune);
+        widgets.add(osc2_tune);
 
         LinearLayout osc2_section_bottom = new LinearLayout(this);
         osc2_section_bottom.setOrientation(LinearLayout.HORIZONTAL);
@@ -343,21 +349,23 @@ public class KosmischeActivity extends Activity {
         osc2_width.setLabelText("pulsewidth");
         osc2_width.setRange(0, 1);
         osc2_width.setLayoutParams(layoutParams);
-        osc2_width.setFillRGB(150,150,150);
         osc2_section_bottom.addView(osc2_width);
+        widgets.add(osc2_width);
+
+        Log.d("Kosmische", "here18");
 
         Slider osc2_detune = new Slider(this, registerWidget("osc2_detune"), Slider.HORIZONTAL);
         osc2_detune.setLabelText("detune");
         osc2_detune.setRange(-20, 20);
         osc2_detune.setLayoutParams(layoutParams);
-        osc2_detune.setFillRGB(150,150,150);
         osc2_section_bottom.addView(osc2_detune);
+        widgets.add(osc2_detune);
 
         Slider osc2_level = new Slider(this, registerWidget("osc2_level"), Slider.VERTICAL);
         osc2_level.setLabelText("level");
         osc2_level.setRange(1, 10);
         osc2_level.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 4f));
-        osc2_level.setFillRGB(190,190,190);
+        widgets.add(osc2_level);
 
         osc2_section.addView(osc2_section_top);
         osc2_section.addView(osc2_section_bottom);
@@ -380,8 +388,8 @@ public class KosmischeActivity extends Activity {
                                                             registerWidget("lfo1_type"),
                                                             new String[] {"Sin", "Tri", "Rect", "Rand"});
         lfo1_type.setLayoutParams(layoutParams);
-        lfo1_type.setFillRGB(190,190,190);
         lfo1.addView(lfo1_type);
+        widgets.add(lfo1_type);
 
         LinearLayout lfo1_freq_depth = new LinearLayout(this);
         lfo1_freq_depth.setOrientation(LinearLayout.VERTICAL);
@@ -391,15 +399,15 @@ public class KosmischeActivity extends Activity {
         lfo1_freq.setLabelText("freq");
         lfo1_freq.setRange(0, 5);
         lfo1_freq.setLayoutParams(layoutParams);
-        lfo1_freq.setFillRGB(150,150,150);
         lfo1_freq_depth.addView(lfo1_freq);
+        widgets.add(lfo1_freq);
 
         final Slider lfo1_depth = new Slider(this, registerWidget("lfo1_depth"), Slider.HORIZONTAL);
         lfo1_depth.setLabelText("depth");
         lfo1_depth.setRange(0, 200);
         lfo1_depth.setLayoutParams(layoutParams);
-        lfo1_depth.setFillRGB(150,150,150);
         lfo1_freq_depth.addView(lfo1_depth);
+        widgets.add(lfo1_depth);
 
         lfo1.addView(lfo1_freq_depth);
 
@@ -426,6 +434,8 @@ public class KosmischeActivity extends Activity {
             {0,3},
         };
 
+        Log.d("Kosmische", "here19");
+
         lfo1_target.setOnChangeRunnable(new Runnable() {
                 public void run() {
                     float[] range = lfoDepthRanges[lfo1_target.getSelectedValue()];
@@ -437,6 +447,7 @@ public class KosmischeActivity extends Activity {
         lfo1_target.setLayoutParams(layoutParams);
         lfo1_target.setFillRGB(150,150,150);
         lfo1.addView(lfo1_target);
+        widgets.add(lfo1_target);
         lfo_section.addView(lfo1);
 
         LinearLayout lfo2 = new LinearLayout(this);
@@ -447,8 +458,8 @@ public class KosmischeActivity extends Activity {
                                                             registerWidget("lfo2_type"),
                                                             new String[] {"Sin", "Tri", "Rect", "Rand"});
         lfo2_type.setLayoutParams(layoutParams);
-        lfo2_type.setFillRGB(190,190,190);
         lfo2.addView(lfo2_type);
+        widgets.add(lfo2_type);
 
         LinearLayout lfo2_freq_depth = new LinearLayout(this);
         lfo2_freq_depth.setOrientation(LinearLayout.VERTICAL);
@@ -458,15 +469,15 @@ public class KosmischeActivity extends Activity {
         lfo2_freq.setLabelText("freq");
         lfo2_freq.setRange(0, 5);
         lfo2_freq.setLayoutParams(layoutParams);
-        lfo2_freq.setFillRGB(150,150,150);
         lfo2_freq_depth.addView(lfo2_freq);
+        widgets.add(lfo2_freq);
 
         final Slider lfo2_depth = new Slider(this, registerWidget("lfo2_depth"), Slider.HORIZONTAL);
         lfo2_depth.setLabelText("depth");
         lfo2_depth.setRange(0, 200);
         lfo2_depth.setLayoutParams(layoutParams);
-        lfo2_depth.setFillRGB(150,150,150);
         lfo2_freq_depth.addView(lfo2_depth);
+        widgets.add(lfo2_depth);
 
         lfo2.addView(lfo2_freq_depth);
 
@@ -490,51 +501,53 @@ public class KosmischeActivity extends Activity {
                 }
             });
         lfo2_target.setLayoutParams(layoutParams);
-        lfo2_target.setFillRGB(150,150,150);
+        widgets.add(lfo2_target);
         lfo2.addView(lfo2_target);
 
         lfo_section.addView(lfo2);
 
         row2.addView(lfo_section);
 
+        Log.d("Kosmische", "here20");
+
         LinearLayout filter_adsr = new LinearLayout(this);
         filter_adsr.setOrientation(LinearLayout.HORIZONTAL);
         filter_adsr.setLayoutParams(layoutParams);
 
-        Slider slider5 = new Slider(this, registerWidget("filter_attack"), Slider.VERTICAL);
-        slider5.setLabelText("a");
-        slider5.setRange(0, 1);
-        slider5.setLayoutParams(layoutParams);
-        slider5.setFillRGB(240,240,240);
-        filter_adsr.addView(slider5);
+        Slider filter_attack = new Slider(this, registerWidget("filter_attack"), Slider.VERTICAL);
+        filter_attack.setLabelText("a");
+        filter_attack.setRange(0, 1);
+        filter_attack.setLayoutParams(layoutParams);
+        filter_adsr.addView(filter_attack);
+        widgets.add(filter_attack);
 
-        Slider slider6 = new Slider(this, registerWidget("filter_decay"), Slider.VERTICAL);
-        slider6.setLabelText("d");
-        slider6.setLayoutParams(layoutParams);
-        slider6.setFillRGB(240,240,240);
-        slider6.setRange(0, 1);
-        filter_adsr.addView(slider6);
+        Slider filter_decay = new Slider(this, registerWidget("filter_decay"), Slider.VERTICAL);
+        filter_decay.setLabelText("d");
+        filter_decay.setLayoutParams(layoutParams);
+        filter_decay.setRange(0, 1);
+        filter_adsr.addView(filter_decay);
+        widgets.add(filter_decay);
 
-        Slider slider7 = new Slider(this, registerWidget("filter_sustain"), Slider.VERTICAL);
-        slider7.setLabelText("s");
-        slider7.setLayoutParams(layoutParams);
-        slider7.setFillRGB(240,240,240);
-        slider7.setRange(0, 1);
-        filter_adsr.addView(slider7);
+        Slider filter_sustain = new Slider(this, registerWidget("filter_sustain"), Slider.VERTICAL);
+        filter_sustain.setLabelText("s");
+        filter_sustain.setLayoutParams(layoutParams);
+        filter_sustain.setRange(0, 1);
+        filter_adsr.addView(filter_sustain);
+        widgets.add(filter_sustain);
 
-        Slider slider8 = new Slider(this, registerWidget("filter_release"), Slider.VERTICAL);
-        slider8.setLabelText("r");
-        slider8.setLayoutParams(layoutParams);
-        slider8.setFillRGB(240,240,240);
-        slider8.setRange(0, 1);
-        filter_adsr.addView(slider8);
+        Slider filter_release = new Slider(this, registerWidget("filter_release"), Slider.VERTICAL);
+        filter_release.setLabelText("r");
+        filter_release.setLayoutParams(layoutParams);
+        filter_release.setRange(0, 1);
+        filter_adsr.addView(filter_release);
+        widgets.add(filter_release);
 
-        Slider slider9 = new Slider(this, registerWidget("filter_env_amount"), Slider.VERTICAL);
-        slider9.setLabelText("amt");
-        slider9.setLayoutParams(layoutParams);
-        slider9.setFillRGB(240,240,240);
-        slider9.setRange(-1, 1);
-        filter_adsr.addView(slider9);
+        Slider filter_env_amount = new Slider(this, registerWidget("filter_env_amount"), Slider.VERTICAL);
+        filter_env_amount.setLabelText("amt");
+        filter_env_amount.setLayoutParams(layoutParams);
+        filter_env_amount.setRange(-1, 1);
+        filter_adsr.addView(filter_env_amount);
+        widgets.add(filter_env_amount);
 
         row2.addView(filter_adsr);
         lLayout.addView(row2);
@@ -547,6 +560,8 @@ public class KosmischeActivity extends Activity {
         createStepButtons(steps);
         
         lLayout.addView(steps);
+
+        Log.d("Kosmische", "here21");
 
         LinearLayout aux = new LinearLayout(this);
         aux.setOrientation(LinearLayout.HORIZONTAL);
@@ -575,9 +590,155 @@ public class KosmischeActivity extends Activity {
         TempoSlider tempoSlider = new TempoSlider(this, 1002, Slider.VERTICAL);
         tempoSlider.setLabelText("tempo");
         tempoSlider.setRange(1, 500);
-        tempoSlider.setFillRGB(0, 200, 0);
         tempoSlider.setLayoutParams(layoutParams);
         sequenceControl.addView(tempoSlider);
+
+        LinearLayout persistance = new LinearLayout(this);
+        persistance.setOrientation(LinearLayout.VERTICAL);
+        persistance.setLayoutParams(layoutParams);
+
+
+
+        String[] patternLabels = new String[127];
+        for(int i = 0; i < patternLabels.length; i++) {
+            patternLabels[i] = "pattern " + (Integer) (i + 1);
+        }
+
+        final ScrollBox patternSelection = new ScrollBox(this, registerWidget("do_nothing"), patternLabels);
+
+        patternSelection.setLayoutParams(layoutParams);
+        persistance.addView(patternSelection);
+
+        LinearLayout patternPersistance = new LinearLayout(this);
+        patternPersistance.setOrientation(LinearLayout.HORIZONTAL);
+        patternPersistance.setLayoutParams(layoutParams);
+
+        Log.d("Kosmische", "here22");
+
+        final MomentaryButton patternLoad = new MomentaryButton(this, 1234, false);
+        patternLoad.setLabelText("load");
+        patternLoad.setLayoutParams(layoutParams);
+        patternPersistance.addView(patternLoad);
+        patternLoad.setActionRunnable(new Runnable() {
+                public void run() {
+                    try {
+                        sequencePersister.setFileName("pattern" + patternSelection.getSelectedValue());
+                        sequencePersister.load();
+                        sequence.loadFromJSON(sequencePersister.getJSONObject());
+                        for(int i = 0; i < sequence.getLength(); i++) {
+                            stepButtons.get(i).setLabelText(sequence.getNote(i).getMidiNumber().toString());
+                            stepButtons.get(i).setSelected(sequence.getEnabled(i));
+                        }
+                        for(StepButton button : stepButtons) {
+                            button.invalidate();
+                        }
+                        patternLoad.setSelected(false);
+                        patternLoad.invalidate();
+                    }
+                    catch(FileNotFoundException e) {
+                        Log.d("Kosmische", "Could not find file: " + e);
+                    }
+                    catch(JSONException e) {
+                        Log.d("Kosmische", "Could not load pattern json: " + e);
+                    }
+                    catch(IOException e) {
+                        Log.d("Kosmische", "Could not load file: " + e);                        
+                    }
+                }
+            });
+
+        final MomentaryButton patternSave = new MomentaryButton(this, 1235, false);
+        patternSave.setLabelText("save");
+        patternSave.setLayoutParams(layoutParams);
+        patternSave.setActionRunnable(new Runnable() {
+                public void run() {
+                    try {
+                        String fileName = "pattern" + patternSelection.getSelectedValue();
+                        sequencePersister.setJSONObject(sequence.asJSONObject(fileName));
+                        Log.d("Kosmische", sequencePersister.getJSONString());           
+                        sequencePersister.setFileName(fileName);
+                        sequencePersister.persist();
+                        patternSave.setSelected(false);
+                        patternSave.invalidate();
+                    }
+                    catch(JSONException e) {
+                        Log.d("Kosmische", "Could not save pattern json: " + e);                        
+                    }
+                    catch(IOException e) {
+                        Log.d("Kosmische", "Could not save pattern file: " + e);                        
+                    }
+                }
+            });
+
+        patternPersistance.addView(patternSave);
+
+        persistance.addView(patternPersistance);
+
+        final ScrollBox patchSelection = new ScrollBox(this, 
+                                                            registerWidget("nothing"),
+                                                            new String[] {"patch 1"
+                                                       });
+        patchSelection.setLayoutParams(layoutParams);
+        persistance.addView(patchSelection);
+
+        LinearLayout patchPersistance = new LinearLayout(this);
+        patchPersistance.setOrientation(LinearLayout.HORIZONTAL);
+        patchPersistance.setLayoutParams(layoutParams);
+
+        final MomentaryButton patchLoad = new MomentaryButton(this, 1236, false);
+        patchLoad.setLabelText("load");
+        patchLoad.setLayoutParams(layoutParams);
+        patternLoad.setActionRunnable(new Runnable() {
+                public void run() {
+                    try {
+                        patchPersister.setFileName("patch" + patchSelection.getSelectedValue());
+                        patchPersister.load();
+                        patch.loadFromJSON(patchPersister.getJSONObject());
+                        loadPatch();
+                        patchLoad.setSelected(false);
+                        patchLoad.invalidate();
+                    }
+                    catch(FileNotFoundException e) {
+                        Log.d("Kosmische", "Could not find file: " + e);
+                    }
+                    catch(JSONException e) {
+                        Log.d("Kosmische", "Could not load pattern json: " + e);
+                    }
+                    catch(IOException e) {
+                        Log.d("Kosmische", "Could not load file: " + e);                        
+                    }
+                }
+            });
+        patchPersistance.addView(patchLoad);
+
+        Log.d("Kosmische", "here23");
+
+        final MomentaryButton patchSave = new MomentaryButton(this, 1237, false);
+        patchSave.setLabelText("save");
+        patchSave.setLayoutParams(layoutParams);
+        patternSave.setActionRunnable(new Runnable() {
+                public void run() {
+                    try {
+                        String fileName = "patch" + patchSelection.getSelectedValue();
+                        patchPersister.setJSONObject(patch.asJSONObject(fileName));
+                        patchPersister.setFileName(fileName);
+                        patchPersister.persist();
+                        patchSave.setSelected(false);
+                        patchSave.invalidate();
+                    }
+                    catch(JSONException e) {
+                        Log.d("Kosmische", "Could not save pattern json: " + e);                        
+                    }
+                    catch(IOException e) {
+                        Log.d("Kosmische", "Could not save pattern file: " + e);                        
+                    }
+                }
+            });
+
+        patchPersistance.addView(patchSave);
+
+        persistance.addView(patchPersistance);
+        sequenceControl.addView(persistance);
         
         aux.addView(sequenceControl);
 
@@ -590,36 +751,44 @@ public class KosmischeActivity extends Activity {
         delayMix.setLayoutParams(layoutParams);
         delayMix.setRange(-1, 1);
         effects.addView(delayMix);
+        widgets.add(delayMix);
 
         Slider delayTime = new Slider(this, registerWidget("delaytime"), Slider.VERTICAL);
         delayTime.setLabelText("delay time");
         delayTime.setLayoutParams(layoutParams);
         delayTime.setRange(0, 2);
         effects.addView(delayTime);
+        widgets.add(delayTime);
 
         Slider decayTime = new Slider(this, registerWidget("decaytime"), Slider.VERTICAL);
         decayTime.setLabelText("feedback");
         decayTime.setLayoutParams(layoutParams);
         decayTime.setRange(0, 10);
         effects.addView(decayTime);
+        widgets.add(decayTime);
 
         Slider reverbMix = new Slider(this, registerWidget("reverb_mix"), Slider.VERTICAL);
         reverbMix.setLabelText("rev. mix");
         reverbMix.setLayoutParams(layoutParams);
         reverbMix.setRange(0, 1);
         effects.addView(reverbMix);
+        widgets.add(reverbMix);
 
         Slider roomSize = new Slider(this, registerWidget("reverb_room_size"), Slider.VERTICAL);
         roomSize.setLabelText("room size");
         roomSize.setLayoutParams(layoutParams);
         roomSize.setRange(0, 1);
         effects.addView(roomSize);
+        widgets.add(roomSize);
 
         Slider reverbDamp = new Slider(this, registerWidget("reverb_damp"), Slider.VERTICAL);
         reverbDamp.setLabelText("damp");
         reverbDamp.setLayoutParams(layoutParams);
         reverbDamp.setRange(0, 1);
         effects.addView(reverbDamp);
+        widgets.add(reverbDamp);
+
+        Log.d("Kosmische", "here24");
 
         aux.addView(effects);
 
@@ -627,6 +796,9 @@ public class KosmischeActivity extends Activity {
         setContentView(lLayout);
 
         bindService(new Intent("supercollider.START_SERVICE"), conn, BIND_AUTO_CREATE);
+
+        loadPatch();
+        Log.d("Kosmische", "here25");
     }
 
     public Sequence getSequence() {
@@ -707,7 +879,7 @@ public class KosmischeActivity extends Activity {
 
                     // get the note out of the sequence
                     if(stepButtons.get(currentStep).isSelected()) {
-                        sendControlMessage("note", sequence.get(currentStep).getMidiNumber());
+                        sendControlMessage("note", sequence.getNote(currentStep).getMidiNumber());
                         sendControlMessage("trigger", 1);
                     }
                 }

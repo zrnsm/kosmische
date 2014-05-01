@@ -10,6 +10,10 @@ public class Note {
         return midiNumber;
     }
 
+    public void setMidiNumber(int midiNumber) {
+        this.midiNumber = midiNumber;
+    }
+
     public void increment() {
         midiNumber++;
         if(midiNumber > 127) {

@@ -48,7 +48,7 @@ public class ScrollBox extends KosmischeWidget {
                             }
                             
                             distanceFromPreviousChange = 0;
-                            ((KosmischeActivity) ScrollBox.this.getContext()).sendControlMessage(ScrollBox.this.getId(), selectedValue);
+                            activity.sendControlMessage(ScrollBox.this.getId(), selectedValue);
                         }
 
                         distanceFromPreviousChange++;
@@ -61,8 +61,22 @@ public class ScrollBox extends KosmischeWidget {
             });
     }
 
-    public int getSelectedValue() {
+    public void setPosition(float i) {
+        Log.d("Kosmische", "setting position scroll");
+        setSelectedValue((int) i);
+    }
+
+    public Integer getSelectedValue() {
         return selectedValue;
+    }
+
+    public void setSelectedValue(int i) {
+        this.selectedValue = i;
+        if(activity != null) {
+            activity.sendControlMessage(getId(), getSelectedValue());
+        }
+
+        invalidate();
     }
 
     public void setOnChangeRunnable(Runnable runnable) {

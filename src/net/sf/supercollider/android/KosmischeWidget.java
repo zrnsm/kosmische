@@ -21,13 +21,12 @@ public abstract class KosmischeWidget extends View {
     protected float height;
     protected float centerX;
     protected float centerY;
-
     protected String labelText = "Parameter";
-
     protected Paint labelPaint;
     protected Paint outline;
     protected Paint fill;
     protected Paint background;
+    protected KosmischeActivity activity;
 
     private boolean firstDraw = true;
 
@@ -46,6 +45,7 @@ public abstract class KosmischeWidget extends View {
 
     public KosmischeWidget(Context context) {
         super(context);
+        this.activity = (KosmischeActivity) context;
 
         labelPaint = new Paint();
         labelPaint.setARGB(255, 100, 100, 100);
@@ -107,7 +107,12 @@ public abstract class KosmischeWidget extends View {
     }
 
     public void setPosition(float position) {
+        Log.d("Kosmische", "setting position widget");
         this.position = position;
+        if(activity != null) {
+            activity.sendControlMessage(getId(), getValue());
+        }
+        invalidate();
     }
 
     public float getValue() {

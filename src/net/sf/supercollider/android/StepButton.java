@@ -25,7 +25,8 @@ public class StepButton extends Button {
 
         this.setOnTouchListener(new OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    Log.d("Kosmische", event.toString());
+                    int step = StepButton.this.getId();
+                    Note note = activity.getSequence().getNote(step);
                     Rect hitRect = new Rect();
                     StepButton.this.getHitRect(hitRect);
                     
@@ -34,15 +35,13 @@ public class StepButton extends Button {
                         Log.d("Kosmische", event.toString());
                         if(!noteChangeInProgress) {
                             isSelected = !isSelected;
+                            activity.getSequence().setEnabled(step, isSelected);
                         }
                         noteChangeInProgress = false;
                         invalidate();
                     }
 
                     if (event.getAction() == MotionEvent.ACTION_MOVE && previousY != null) {
-                        KosmischeActivity parentActivity = ((KosmischeActivity) StepButton.this.getContext());
-                        int step = StepButton.this.getId();
-                        Note note = parentActivity.getSequence().get(step);
                         float dy = event.getY() - previousY;
 
                         if(distanceFromPreviousChange > noteChangeGranularity) {
