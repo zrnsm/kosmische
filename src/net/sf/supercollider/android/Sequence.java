@@ -9,19 +9,78 @@ public class Sequence {
     private ArrayList<Boolean> isEnabled;
     private int length;
 
-    public Sequence(int length) {
-        this.length = length;
-        notes = new ArrayList<Note>(length);
-        isEnabled = new ArrayList<Boolean>(length);
-        randomPentatonicSequence(50);
+    public static enum Scale {
+        MINOR_PENTATONIC,
+        MAJOR_PENTATONIC,
+        MAJOR,
+        MELODIC_MINOR,
+        HARMONIC_MINOR,
+        ARABIAN,
+        BEBOP,
+        BYZANTINE,
+        CHINESE;
+
+        private final int value;
+        private Scale() {
+            this.value = 0;
+        }
+
+        private Scale(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
     }
 
-    private void randomPentatonicSequence(int root) {
-        int[] degrees = {0, 3, 5, 7, 10};
-        for(int i = 0; i < length; i++) {
-            notes.add(new Note(root + degrees[(int) (Math.random() * 5)]));
-            isEnabled.add(true);
+    private int[][] scaleDegrees = {
+        {0, 3, 5, 7, 10},
+        {0, 2, 4, 7, 9},
+        {0, 2, 4, 5, 7, 9, 11},
+        {0, 2, 3, 5, 7, 9, 11},
+        {0, 2, 3, 5, 6, 8, 10},
+        {0, 2, 4, 5, 7, 8, 9, 11},
+        {0, 1, 4, 5, 7, 8, 11},
+        {0, 4, 6, 7, 11}
+    };
+
+    public Sequence(int length) {
+        this.length = length;
+        setToRandom(Scale.MINOR_PENTATONIC);
+    }
+
+    public void setToRandom(Scale scale) {
+        if(notes == null) {
+            notes = new ArrayList<Note>(length);
+            isEnabled = new ArrayList<Boolean>(length);
         }
+        else {
+            notes.clear();
+            isEnabled.clear();
+        }
+
+        int[] degrees = scaleDegrees[scale.getValue()];
+        int root = 60 + randomRoot() + randomRootOctave();
+        for(int i = 0; i < length; i++) {
+            Note note = new Note(root + randomNoteOctave() + degrees[(int) (Math.random() * degrees.length)]);
+            notes.add(note);
+            isEnabled.add((Math.random() > 0.5) ? true : false);
+        }
+    }
+
+    private int randomRoot() {
+        return (int) (Math.random() * 12);
+    }
+
+    private int randomNoteOctave() {
+        int[] octaveOffsets = {-12, 0, 12};
+        return octaveOffsets[(int) (Math.random() * octaveOffsets.length)];
+    }
+
+    private int randomRootOctave() {
+        int[] octaveOffsets = {-24, -12, 0, 12, 24};
+        return octaveOffsets[(int) (Math.random() * octaveOffsets.length)];
     }
 
     public int getLength() {

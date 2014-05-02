@@ -71,6 +71,7 @@ public class ScrollBox extends KosmischeWidget {
 
     public void setSelectedValue(int i) {
         this.selectedValue = i;
+        this.setLabelText(this.values[selectedValue]);
         activity.sendControlMessage(getId(), selectedValue, selectedValue);
 
         invalidate();

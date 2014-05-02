@@ -22,7 +22,7 @@ public class TempoSlider extends Slider {
                         h_position = event.getX() / width;
                         v_position = (height - event.getY()) / height;
                         invalidate();
-                        activity.setBPM(getValue());
+                        activity.setBPM((int) getValue());
                     }
                     return true;
                 }

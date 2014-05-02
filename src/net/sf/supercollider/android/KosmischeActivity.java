@@ -48,7 +48,7 @@ public class KosmischeActivity extends Activity {
     private int defaultNodeId = 999;
     private HashMap<Integer, String> parameterMap;
     private ArrayList<KosmischeWidget> widgets;
-    private float bpm = 120.0f;
+    private int bpm = 120;
     private int currentStep = -1;
     private boolean sequenceReversed = false;
     private TimerRunnable timerRunnable = new TimerRunnable();
@@ -102,6 +102,8 @@ public class KosmischeActivity extends Activity {
                 superCollider.start();
                 superCollider.sendMessage(OscMessage.createSynthMessage("Kosmische", defaultNodeId, 0, 1));
                 loadPatch();
+                loadPatternFile("working_pattern");
+                loadPatchFile("working_patch");
             } catch (RemoteException re) {
                 Log.d("Kosmische", re.toString());
             }
@@ -584,6 +586,7 @@ public class KosmischeActivity extends Activity {
         tempoSlider.setRange(1, 500);
         tempoSlider.setPosition(0.24f);
         tempoSlider.setLayoutParams(layoutParams);
+        tempoSlider.setValueLabelEnabled(true);
         playReverseTempo.addView(tempoSlider);
 
         sequenceControl.addView(playReverseTempo);
@@ -592,44 +595,54 @@ public class KosmischeActivity extends Activity {
         randomControl.setOrientation(LinearLayout.VERTICAL);
         randomControl.setLayoutParams(layoutParams);
 
-        // LinearLayout randomScale = new LinearLayout(this);
-        // randomScale.setOrientation(LinearLayout.VERTICAL);
-        // randomScale.setLayoutParams(layoutParams);
-        // randomControl.addView(randomScale);
+        LinearLayout randomScale = new LinearLayout(this);
+        randomScale.setOrientation(LinearLayout.VERTICAL);
+        randomScale.setLayoutParams(layoutParams);
 
-        // final ScrollBox scale = new ScrollBox(this, registerWidget("do_nothing"), new String[] {"m penta"});
-        // scale.setLayoutParams(layoutParams);
+        String[] scaleLabels = new String[] {
+            "minor penta.",
+            "major penta.",
+            "major",
+            "melodic minor",
+            "harmonic minor",
+            "arabian",
+            "bebop",
+            "byzantine",
+            "chinese"
+        };
 
-        // final MomentaryButton randomSequence = new MomentaryButton(this, 1008, true);
-        // randomSequence.setLabelText("rand pattern");
-        // randomSequence.setLayoutParams(layoutParams);
-        // randomSequence.setActionRunnable(new Runnable() {
-        //         public void run() {
-        //             //                    patch.setToRandom();
-        //             //                    loadPatch();
-        //             randomSequence.setSelected(false);
-        //             randomSequence.invalidate();
-        //         }
-        //     });
+        final ScrollBox scale = new ScrollBox(this, registerWidget("do_nothing"), scaleLabels);
+        scale.setLayoutParams(layoutParams);
 
-        // randomScale.addView(scale);
-        // randomScale.addView(randomSequence);
-        // randomControl.addView(randomScale);
+        final MomentaryButton randomSequence = new MomentaryButton(this, 1008, false);
+        randomSequence.setLabelText("rand pattern");
+        randomSequence.setLayoutParams(layoutParams);
+        randomSequence.setActionRunnable(new Runnable() {
+                public void run() {
+                    sequence.setToRandom(Sequence.Scale.values()[scale.getSelectedValue()]);
+                    updateStepButtons();
+                    randomSequence.setSelected(false);
+                    randomSequence.invalidate();
+                }
+            });
 
-        // final MomentaryButton randomPatch = new MomentaryButton(this, 1008, true);
-        // randomPatch.setLabelText("rand patch");
-        // randomPatch.setLayoutParams(layoutParams);
-        // randomPatch.setActionRunnable(new Runnable() {
-        //         public void run() {
-        //             patch.setToRandom();
-        //             loadPatch();
-        //             randomPatch.setSelected(false);
-        //             randomPatch.invalidate();
-        //         }
-        //     });
+        randomScale.addView(scale);
+        randomScale.addView(randomSequence);
+        randomControl.addView(randomScale);
+
+        final MomentaryButton randomPatch = new MomentaryButton(this, 1008, false);
+        randomPatch.setLabelText("rand patch");
+        randomPatch.setLayoutParams(layoutParams);
+        randomPatch.setActionRunnable(new Runnable() {
+                public void run() {
+                    patch.setToRandom();
+                    loadPatch();
+                    randomPatch.setSelected(false);
+                    randomPatch.invalidate();
+                }
+            });
 
         randomControl.addView(randomPatch);
-
         sequenceControl.addView(randomControl);
 
         LinearLayout persistance = new LinearLayout(this);
@@ -656,33 +669,9 @@ public class KosmischeActivity extends Activity {
         patternPersistance.addView(patternLoad);
         patternLoad.setActionRunnable(new Runnable() {
                 public void run() {
-                    try {
-                        String filePath = "pattern" + patternSelection.getSelectedValue();
-                        File file = new File(getFilesDir(), filePath);
-                        if(file.exists()) {
-                            sequencePersister.setFileName("pattern" + patternSelection.getSelectedValue());
-                            sequencePersister.load();
-                            sequence.loadFromJSON(sequencePersister.getJSONObject());
-                            for(int i = 0; i < sequence.getLength(); i++) {
-                                stepButtons.get(i).setLabelText(sequence.getNote(i).getMidiNumber().toString());
-                                stepButtons.get(i).setSelected(sequence.getEnabled(i));
-                            }
-                            for(StepButton button : stepButtons) {
-                                button.invalidate();
-                            }
-                        }
-                        patternLoad.setSelected(false);
-                        patternLoad.invalidate();
-                    }
-                    catch(FileNotFoundException e) {
-                        Log.d("Kosmische", "Could not find file: " + e);
-                    }
-                    catch(JSONException e) {
-                        Log.d("Kosmische", "Could not load pattern json: " + e);
-                    }
-                    catch(IOException e) {
-                        Log.d("Kosmische", "Could not load file: " + e);                        
-                    }
+                    loadPatternFile("pattern" + patternSelection.getSelectedValue());
+                    patternLoad.setSelected(false);
+                    patternLoad.invalidate();
                 }
             });
 
@@ -731,27 +720,9 @@ public class KosmischeActivity extends Activity {
         patchLoad.setLayoutParams(layoutParams);
         patchLoad.setActionRunnable(new Runnable() {
                 public void run() {
-                    try {
-                        String filePath = "patch" + patchSelection.getSelectedValue();
-                        File file = new File(getFilesDir(), filePath);
-                        if(file.exists()) {
-                            patchPersister.setFileName(filePath);
-                            patchPersister.load();
-                            patch.loadFromJSON(patchPersister.getJSONObject());
-                            loadPatch();
-                        }
-                        patchLoad.setSelected(false);
-                        patchLoad.invalidate();
-                    }
-                    catch(FileNotFoundException e) {
-                        Log.d("Kosmische", "Could not find file: " + e);
-                    }
-                    catch(JSONException e) {
-                        Log.d("Kosmische", "Could not load pattern json: " + e);
-                    }
-                    catch(IOException e) {
-                        Log.d("Kosmische", "Could not load file: " + e);                        
-                    }
+                    loadPatchFile("patch" + patchSelection.getSelectedValue());
+                    patchLoad.setSelected(false);
+                    patchLoad.invalidate();
                 }
             });
         patchPersistance.addView(patchLoad);
@@ -842,6 +813,16 @@ public class KosmischeActivity extends Activity {
     public Sequence getSequence() {
         return sequence;
     }
+
+    public void updateStepButtons() {
+        for(int i = 0; i < sequence.getLength(); i++) {
+            stepButtons.get(i).setLabelText(sequence.getNote(i).getMidiNumber().toString());
+            stepButtons.get(i).setSelected(sequence.getEnabled(i));
+        }
+        for(StepButton button : stepButtons) {
+            button.invalidate();
+        }
+    }
     
     public class TimerRunnable implements Runnable {
         private Object mPauseLock = new Object();
@@ -874,9 +855,9 @@ public class KosmischeActivity extends Activity {
                             }
                         }
                     }
-                    Thread.sleep((long) (60000 / bpm / 2.0));
+                    Thread.sleep((long) (60000 / bpm / 8.0));
                     sendControlMessage("trigger", 0, 0);
-                    Thread.sleep((long) (60000 / bpm / 2.0 - 1));
+                    Thread.sleep((long) (60000 / bpm / 8.0 - 1));
                     
                     if(sequenceReversed) {
                         currentStep--;
@@ -913,18 +894,80 @@ public class KosmischeActivity extends Activity {
         return timerThread;
     }
 
-    public void setBPM(float bpm) {
+    public void setBPM(int bpm) {
         this.bpm = bpm;
     }
 
     public void setSequenceReversed(boolean sequenceReversed) {
         this.sequenceReversed = sequenceReversed;
     }
-	
+
+    private void loadPatternFile(String fileName) {
+        try {
+            File file = new File(getFilesDir(), fileName);
+            if(file.exists()) {
+                sequencePersister.setFileName(fileName);
+                sequencePersister.load();
+                sequence.loadFromJSON(sequencePersister.getJSONObject());
+                updateStepButtons();
+            }
+        }
+        catch(FileNotFoundException e) {
+            Log.d("Kosmische", "Could not find file: " + e);
+        }
+        catch(JSONException e) {
+            Log.d("Kosmische", "Could not load pattern json: " + e);
+        }
+        catch(IOException e) {
+            Log.d("Kosmische", "Could not load file: " + e);                        
+        }
+    }
+
+    private void loadPatchFile(String fileName) {
+        try {
+            File file = new File(getFilesDir(), fileName);
+            if(file.exists()) {
+                patchPersister.setFileName(fileName);
+                patchPersister.load();
+                patch.loadFromJSON(patchPersister.getJSONObject());
+                loadPatch();
+            }
+        }
+        catch(FileNotFoundException e) {
+            Log.d("Kosmische", "Could not find file: " + e);
+        }
+        catch(JSONException e) {
+            Log.d("Kosmische", "Could not load pattern json: " + e);
+        }
+        catch(IOException e) {
+            Log.d("Kosmische", "Could not load file: " + e);                        
+        }
+    }
+
     @Override
     public void onPause() {
         super.onPause();
         timerRunnable.onPause();
+
+        try {
+            // save working pattern and patch when put in background
+            String fileName = "working_pattern";
+            sequencePersister.setJSONObject(sequence.asJSONObject(fileName));
+            sequencePersister.setFileName(fileName);
+            sequencePersister.persist();
+
+            fileName = "working_patch";
+            patchPersister.setJSONObject(patch.asJSONObject(fileName));
+            patchPersister.setFileName(fileName);
+            patchPersister.persist();
+        }
+        catch(JSONException e) {
+            Log.d("Kosmische", "Could not generate working pattern json: " + e);                        
+        }
+        catch(IOException e) {
+            Log.d("Kosmische", "Could not save working pattern file: " + e);                        
+        }
+
         try {
             // Free up audio when the activity is not in the foreground
             if (superCollider != null) superCollider.stop();

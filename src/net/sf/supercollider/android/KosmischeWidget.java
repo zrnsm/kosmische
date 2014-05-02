@@ -132,7 +132,7 @@ public abstract class KosmischeWidget extends View {
     protected abstract void drawOutline(Canvas canvas);
 
     protected void drawLabel(Canvas canvas) {
-        String label = valueLabelEnabled ? labelText + " " + getValue() : labelText;
+        String label = valueLabelEnabled ? labelText + " " + ((int) getValue()) : labelText;
         int x = (int) (width / 2);
         int y = (int) ((height / 2) - ((labelPaint.descent() + labelPaint.ascent()) / 2)); 
         canvas.drawText(label, x, y, labelPaint);
