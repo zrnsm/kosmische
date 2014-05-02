@@ -615,7 +615,7 @@ public class KosmischeActivity extends Activity {
         scale.setLayoutParams(layoutParams);
 
         final MomentaryButton randomSequence = new MomentaryButton(this, 1008, false);
-        randomSequence.setLabelText("rand pattern");
+        randomSequence.setLabelText("random pattern");
         randomSequence.setLayoutParams(layoutParams);
         randomSequence.setActionRunnable(new Runnable() {
                 public void run() {
@@ -631,7 +631,7 @@ public class KosmischeActivity extends Activity {
         randomControl.addView(randomScale);
 
         final MomentaryButton randomPatch = new MomentaryButton(this, 1008, false);
-        randomPatch.setLabelText("rand patch");
+        randomPatch.setLabelText("random patch");
         randomPatch.setLayoutParams(layoutParams);
         randomPatch.setActionRunnable(new Runnable() {
                 public void run() {
