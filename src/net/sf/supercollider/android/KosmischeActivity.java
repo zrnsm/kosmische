@@ -1,7 +1,6 @@
 package net.sf.supercollider.android;
 
 import net.sf.supercollider.android.ISuperCollider;
-import net.sf.supercollider.android.KKnob;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -44,7 +43,6 @@ import java.io.File;
 public class KosmischeActivity extends Activity {
     private ServiceConnection conn = new ScServiceConnection();
     private ISuperCollider.Stub superCollider;
-    private KKnob mainWidget = null;
     private int defaultNodeId = 999;
     private HashMap<Integer, String> parameterMap;
     private ArrayList<KosmischeWidget> widgets;
