@@ -1,13 +1,13 @@
 (
 	SynthDef("Kosmische", {|note = 45, 
-		osc1_level = 10.0, 
+		osc1_level = 4.5, 
 		osc1_type = 0, 
 		osc1_detune = 0, 
 		osc1_width = 0.5, 
 		osc1_octave = 0,
 		osc1_tune = 0,
 
-		osc2_level = 10.0, 
+		osc2_level = 4.5, 
 		osc2_type = 0, 
 		osc2_detune = 0, 
 		osc2_width = 0.5, 
@@ -16,23 +16,23 @@
 		
 		lfo1_type = 0,
 		lfo1_freq = 0,
-       lfo1_depth = 0,
-       lfo1_target = 0,
+                lfo1_depth = 0,
+                lfo1_target = 0,
 
-       lfo2_type = 0,
+                lfo2_type = 0,
 		lfo2_freq = 0,
-       lfo2_depth = 0,
-       lfo2_target = 0,
+                lfo2_depth = 0,
+                lfo2_target = 0,
 
-       lfo3_type = 0,
+                lfo3_type = 0,
 		lfo3_freq = 0,
-       lfo3_depth = 0,
-       lfo3_target = 0,
+                lfo3_depth = 0,
+                lfo3_target = 0,
 
-       lfo4_type = 0,
+                lfo4_type = 0,
 		lfo4_freq = 0,
-       lfo4_depth = 0,
-       lfo4_target = 0,
+                lfo4_depth = 0,
+                lfo4_target = 0,
 		
 		amp_attack = 0.001,
 		amp_decay = 0.5,
@@ -101,57 +101,26 @@
 
 		osc1_freq_mod = In.ar(osc1_freq_bus);
 		osc1 = osc1_level.log10 * Select.ar(osc1_type, [
-			Saw.ar((note + osc1_tune + (osc1_octave * 12)).midicps + osc1_detune + osc1_freq_mod),
-			Pulse.ar((note + osc1_tune + (osc1_octave * 12)).midicps + osc1_detune + osc1_freq_mod, osc1_width + In.ar(osc1_width_bus).clip(-0.5, 0.5)), 
+			Saw.ar(((note + osc1_tune + (osc1_octave * 12)).midicps + osc1_detune + osc1_freq_mod).clip(0, 40000)),
+			Pulse.ar(((note + osc1_tune + (osc1_octave * 12)).midicps + osc1_detune + osc1_freq_mod).clip(0, 40000), osc1_width + In.ar(osc1_width_bus).clip(-0.5, 0.5)), 
 			// unfortunately the repitition of the frequency calculation is necessary here to keep this contained in a single synthdef
-			SinOsc.ar((note + osc1_tune + (osc1_octave * 12)).midicps + osc1_detune + osc1_freq_mod),
+			SinOsc.ar(((note + osc1_tune + (osc1_octave * 12)).midicps + osc1_detune + osc1_freq_mod).clip(0, 40000)),
 			WhiteNoise.ar
 		]);
 
-       osc2_freq_mod = In.ar(osc1_freq_bus);
+       osc2_freq_mod = In.ar(osc2_freq_bus);
 		osc2 = osc2_level.log10 * Select.ar(osc2_type, [
-			Saw.ar((note + osc2_tune + (osc2_octave * 12)).midicps + osc2_detune + osc2_freq_mod),
-			Pulse.ar((note + osc2_tune + (osc2_octave * 12)).midicps + osc2_detune + osc2_freq_mod, osc2_width + In.ar(osc2_width_bus).clip(-0.5, 0.5)),
-			SinOsc.ar((note + osc2_tune + (osc2_octave * 12)).midicps + osc2_detune + osc2_freq_mod),
+			Saw.ar(((note + osc2_tune + (osc2_octave * 12)).midicps + osc2_detune + osc2_freq_mod).clip(0, 40000)),
+			Pulse.ar(((note + osc2_tune + (osc2_octave * 12)).midicps + osc2_detune + osc2_freq_mod).clip(0, 40000), osc2_width + In.ar(osc2_width_bus).clip(-0.5, 0.5)),
+			SinOsc.ar(((note + osc2_tune + (osc2_octave * 12)).midicps + osc2_detune + osc2_freq_mod).clip(0, 40000)),
 			WhiteNoise.ar
 		]);
 		
 		amp_env = EnvGen.kr(Env.adsr(amp_attack, amp_decay, amp_sustain, amp_release, 1, 0), trigger);
 		filter_env = XFade2.kr(DC.kr(1), EnvGen.kr(Env.adsr(filter_attack, filter_decay, filter_sustain, filter_release, 1, 0), trigger), filter_env_amount);
-		filtered = MoogFF.ar(amp_env * Mix.new([osc1, osc2]), (cutoff + In.ar(cutoff_bus)) * filter_env, resonance + In.ar(resonance_bus));
-		delayed = XFade2.ar(filtered, CombC.ar(filtered, 2.0, delaytime + In.ar(delay_time_bus), decaytime + In.ar(decay_time_bus)), 0);
+		filtered = MoogFF.ar(amp_env * Mix.new([osc1, osc2]), ((cutoff + In.ar(cutoff_bus)) * filter_env).clip(0, 40000), (resonance + In.ar(resonance_bus)).clip(0, 4));
+		delayed = XFade2.ar(filtered, CombC.ar(filtered, 2.0, (delaytime + In.ar(delay_time_bus)).clip(0, 2.0), (decaytime + In.ar(decay_time_bus)).clip(0, 10000)), delay_mix);
 		reverbed = FreeVerb.ar(delayed, reverb_mix, reverb_room_size, reverb_damp);
 		Out.ar(0, [reverbed, reverbed]);	
 	}).writeDefFile("/Users/nicolas/git/kosmische/assets")
 )
-
-x = Synth("Kosmische");
-x.set(\filter_env_amount, 1);
-x.set(\note, 40);
-x.set(\trigger, 1);
-x.set(\cutoff, 10000);
-
-x.set(\lfo1_freq, 0.3);
-x.set(\lfo1_type, 0);
-x.set(\lfo1_depth, 0.5);
-x.set(\lfo1_target, 1);
-
-x.set(\lfo2_freq, 0.4);
-x.set(\lfo2_type, 0);
-x.set(\lfo2_depth, 2);
-x.set(\lfo2_target, 0);
-
-x.set(\osc1_type, 1);
-x.set(\osc2_level, 1);
-
-x.set(\trigger, 0);
-x.set(\osc1_detune, 0);
-x.set(\osc1_octave, 2);
-x.set(\osc1_level, 0.5);
-x.set(\osc1_type, 2);
-x.set(\type_1, 1);
-x.set(\osc2_octave, 2);
-x.set(\osc2_detune, 2);
-x.set(\osc2_level, 0);
-x.set(\osc2_type, 2);
-x.free;
